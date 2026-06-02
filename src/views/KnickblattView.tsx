@@ -340,6 +340,17 @@ export function KnickblattView({
                 />
                 Merkstellen markieren
               </label>
+              <label className="mt-1.5 flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-brand-500"
+                  checked={!!config.vorlageNachspur}
+                  onChange={(e) =>
+                    setConfig((c) => ({ ...c, vorlageNachspur: e.target.checked }))
+                  }
+                />
+                Umriss zum Nachspuren
+              </label>
             </fieldset>
           </div>
         </div>

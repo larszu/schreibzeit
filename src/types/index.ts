@@ -146,6 +146,8 @@ export interface KnickblattConfig {
   vorlageMitSilben: boolean;
   /** Vorlage-Spalte mit markierten Merkstellen (Differenzierung). */
   vorlageMitMerkstellen: boolean;
+  /** Vorlage als Umriss-/Hohlschrift zum Nachspuren. */
+  vorlageNachspur?: boolean;
   thema?: string;
 }
 

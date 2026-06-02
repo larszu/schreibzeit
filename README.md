@@ -128,7 +128,8 @@ Die App lässt sich mit einem Klick als Webseite veröffentlichen:
 - Pro Wort: Artikel, Wortart, **Silbentrennung**, **Merkstellen**, Status, Quelle, Notiz
 - Status `neu` · `wird geübt` · `sitzt` mit Filter &amp; Sortierung
 - Hinzufügen, bearbeiten, löschen, duplizieren, Massenaktionen
-- **Wort vorlesen** (Sprachausgabe, offline) &amp; **Lernstands-Übersicht drucken** (für Elterngespräche/Doku)
+- **Wort vorlesen** &amp; **Diktat-Modus** (liest die Wörter mit Pause vor – Selbst-Diktat, offline)
+- **Lernstands-Übersicht drucken** (für Elterngespräche/Doku)
 - Durchsuchbare Sidebar, schnelles Umschalten zwischen Kindern
 
 ---
@@ -159,7 +160,7 @@ Die App lässt sich mit einem Klick als Webseite veröffentlichen:
 - **Schnellvorlagen** (Standard / „LRS · leicht") und **Stapeldruck für die ganze Klasse** (ein Blattsatz je Kind)
 - Echte **Grundschul-Lineatur** (Klasse 1–4 / Haus-Lineatur mit Mittelband), mm-genau
 - **Eigene Lineaturen** anlegen, **eigene Schriftarten** laden &amp; für die Vorlage wählen, **Spalten-Symbole** frei konfigurierbar
-- **Differenzierung**: Vorlage mit vorgedruckten Silbenbögen und/oder Merkstellen
+- **Differenzierung**: Vorlage mit vorgedruckten Silbenbögen, markierten Merkstellen und/oder als **Umriss zum Nachspuren**
 - Wortauswahl per Filter (Status, neueste, Zufall) · **Live-Vorschau** · Druck/PDF
 
 ---

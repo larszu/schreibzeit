@@ -17,7 +17,7 @@ import { formatSyllables } from '@/core/syllables';
 import { lookupWort, woerterbuchSilben } from '@/services/dictionary';
 import { uebernehmeWort, uebernehmeWoerter } from '@/services/lernwortHelfer';
 import { erkenneTextAusFoto } from '@/services/ocr';
-import { sprichWort, ttsVerfuegbar } from '@/services/tts';
+import { sprichWort, spreche, stoppeSprache, ttsVerfuegbar } from '@/services/tts';
 import { GRUNDWORTSCHATZ_LISTEN, ladeGrundwortschatz } from '@/data/grundwortschatz';
 import { IconCamera, IconSpeaker, IconList, IconBook } from '@/components/icons';
 import { WortChips } from '@/components/WortChips';
@@ -44,6 +44,7 @@ export function KarteiView({
   const [editor, setEditor] = useState<{ offen: boolean; wort?: Lernwort }>({ offen: false });
   const [extraktorOffen, setExtraktorOffen] = useState(false);
   const [gwsOffen, setGwsOffen] = useState(false);
+  const [diktatOffen, setDiktatOffen] = useState(false);
   const [auswahl, setAuswahl] = useState<Set<string>>(new Set());
   const [uebersichtDruck, setUebersichtDruck] = useState(false);
 
@@ -83,6 +84,15 @@ export function KarteiView({
         <button className="btn-secondary" onClick={() => setGwsOffen(true)}>
           <IconBook width={18} height={18} /> Aus Grundwortschatz
         </button>
+        {woerter.length > 0 && TTS_OK && (
+          <button
+            className="btn-ghost"
+            onClick={() => setDiktatOffen(true)}
+            title="Wörter als Diktat vorlesen"
+          >
+            <IconSpeaker width={18} height={18} /> Diktat
+          </button>
+        )}
         {woerter.length > 0 && (
           <button
             className="btn-ghost"
@@ -170,6 +180,7 @@ export function KarteiView({
         vorhandene={woerter}
         onClose={() => setGwsOffen(false)}
       />
+      <DiktatModal offen={diktatOffen} woerter={gefiltert} onClose={() => setDiktatOffen(false)} />
 
       {uebersichtDruck && (
         <PrintPortal solo>
@@ -845,6 +856,123 @@ function GrundwortschatzModal({
         <div className="flex justify-end">
           <button className="btn-primary" onClick={onClose}>
             Fertig
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function DiktatModal({
+  offen,
+  woerter,
+  onClose,
+}: {
+  offen: boolean;
+  woerter: Lernwort[];
+  onClose: () => void;
+}) {
+  const [laufend, setLaufend] = useState(false);
+  const [index, setIndex] = useState(-1);
+  const [pauseSek, setPauseSek] = useState(6);
+  const [zweimal, setZweimal] = useState(true);
+  const laufendRef = useRef(false);
+  const pauseRef = useRef(6);
+  pauseRef.current = pauseSek;
+
+  const warte = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));
+  const sag = (text: string) => new Promise<void>((r) => spreche(text, r));
+
+  function stop() {
+    laufendRef.current = false;
+    setLaufend(false);
+    setIndex(-1);
+    stoppeSprache();
+  }
+
+  async function start() {
+    if (woerter.length === 0) return;
+    laufendRef.current = true;
+    setLaufend(true);
+    for (let i = 0; i < woerter.length; i++) {
+      if (!laufendRef.current) return;
+      setIndex(i);
+      await sag(woerter[i].wort);
+      if (!laufendRef.current) return;
+      if (zweimal) {
+        await warte(600);
+        if (!laufendRef.current) return;
+        await sag(woerter[i].wort);
+      }
+      await warte(pauseRef.current * 1000);
+    }
+    stop();
+  }
+
+  // Beim Schließen/Unmount Sprache stoppen.
+  useEffect(() => {
+    if (!offen) stop();
+    return () => stop();
+  }, [offen]);
+
+  return (
+    <Modal offen={offen} titel="Diktat vorlesen" onClose={onClose}>
+      <div className="space-y-4">
+        <p className="text-sm text-ink-soft">
+          Liest die {woerter.length} Wörter nacheinander vor – zum Selbst-Diktat. Tipp: Bildschirm
+          fürs Kind verdecken.
+        </p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label className="label" htmlFor="dik-pause">
+              Pause zwischen den Wörtern: {pauseSek} s
+            </label>
+            <input
+              id="dik-pause"
+              type="range"
+              min={3}
+              max={15}
+              value={pauseSek}
+              className="w-full accent-brand-500"
+              onChange={(e) => setPauseSek(Number(e.target.value))}
+            />
+          </div>
+          <label className="flex items-center gap-2 self-end text-sm">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-brand-500"
+              checked={zweimal}
+              onChange={(e) => setZweimal(e.target.checked)}
+            />
+            Jedes Wort 2× vorlesen
+          </label>
+        </div>
+
+        <div className="rounded-lg border border-paper-200 bg-paper-50 px-3 py-4 text-center">
+          {laufend && index >= 0 ? (
+            <>
+              <p className="text-xs text-ink-faint">
+                Wort {index + 1} / {woerter.length}
+              </p>
+              <p className="font-serif text-2xl text-ink">{woerter[index]?.wort}</p>
+            </>
+          ) : (
+            <p className="text-sm text-ink-faint">Bereit – auf „Start" klicken.</p>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2">
+          {!laufend ? (
+            <button className="btn-primary" onClick={start} disabled={woerter.length === 0}>
+              <IconSpeaker width={18} height={18} /> Start
+            </button>
+          ) : (
+            <button className="btn-danger" onClick={stop}>
+              Stopp
+            </button>
+          )}
+          <button className="btn-secondary" onClick={onClose}>
+            {t.common.schliessen}
           </button>
         </div>
       </div>

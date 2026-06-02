@@ -81,6 +81,7 @@ export function KnickblattDocument({
                           merkstellen={w.merkstellen}
                           mitSilben={config.vorlageMitSilben}
                           mitMerkstellen={config.vorlageMitMerkstellen}
+                          umriss={config.vorlageNachspur}
                           artikel={w.artikel || undefined}
                           groesse={22}
                           fontFamily={config.vorlageFont}

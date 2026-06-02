@@ -1,6 +1,7 @@
 // Darstellung eines Lernworts als Vorlage – optional mit Silbenbögen und/oder
 // markierten Merkstellen. Wird im Knickblatt (Vorlage-Spalte) und auf
 // Wortkarten verwendet.
+import type { CSSProperties } from 'react';
 import { breakpointsFromSyllables } from '@/core/syllables';
 
 const MERK_FARBE = '#c0492f';
@@ -12,6 +13,7 @@ export function WortAnzeige({
   merkstellen,
   mitSilben = false,
   mitMerkstellen = false,
+  umriss = false,
   artikel,
   groesse = 28,
   fontFamily,
@@ -21,6 +23,8 @@ export function WortAnzeige({
   merkstellen: number[];
   mitSilben?: boolean;
   mitMerkstellen?: boolean;
+  /** Hohlschrift (Umriss) zum Nachspuren. */
+  umriss?: boolean;
   artikel?: string;
   /** Schriftgröße in px. */
   groesse?: number;
@@ -66,18 +70,19 @@ export function WortAnzeige({
               {seg.text.split('').map((ch, ci) => {
                 const idx = seg.start + ci;
                 const markiert = mitMerkstellen && merkSet.has(idx);
+                const strichFarbe = markiert ? MERK_FARBE : '#555';
+                const style: CSSProperties = {};
+                if (umriss) {
+                  // Hohlschrift zum Nachspuren.
+                  style.color = 'transparent';
+                  (style as Record<string, string>).WebkitTextStrokeWidth = '0.7px';
+                  (style as Record<string, string>).WebkitTextStrokeColor = strichFarbe;
+                } else if (markiert) {
+                  style.color = MERK_FARBE;
+                }
+                if (markiert) style.borderBottom = `2px solid ${MERK_FARBE}`;
                 return (
-                  <span
-                    key={ci}
-                    style={
-                      markiert
-                        ? {
-                            color: MERK_FARBE,
-                            borderBottom: `2px solid ${MERK_FARBE}`,
-                          }
-                        : undefined
-                    }
-                  >
+                  <span key={ci} style={Object.keys(style).length ? style : undefined}>
                     {ch}
                   </span>
                 );

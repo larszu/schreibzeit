@@ -33,7 +33,7 @@ Legende: ✅ bereits in Schreibzeit · 🟡 teilweise · ⬜ geplant/Idee
 
 **Drucken & Arbeitsblätter**
 5. ✅ *Knickblatt-Generator* (Vorlage → schwingen → markieren → knicken → auswendig).
-6. ✅ *Grundschul-Lineaturen* (Klasse 1–4 / Haus) **+ eigene Lineaturen** (parametrisch) **+ eigene Schriftarten** (Upload lizenzierter Grundschrift/Schulausgangsschrift, Auswahl für die Vorlage) **+ konfigurierbare Spalten-Symbole**; ⬜ mitgelieferte gepunktete Nachspur-Schrift noch offen.
+6. ✅ *Grundschul-Lineaturen* (Klasse 1–4 / Haus) **+ eigene Lineaturen** (Bild-Zuschnitt) **+ eigene Schriftarten** (Upload + mitgelieferte Andika, Auswahl für die Vorlage) **+ konfigurierbare Spalten-Symbole** **+ Umriss-/Hohlschrift zum Nachspuren**; ⬜ mitgelieferte gepunktete Nachspur-Schrift noch offen.
 7. ✅ *Silbenbögen* (zuschaltbar) und Merkstellen-Markierung auf der Vorlage.
 8. ✅ *Druckfertiges PDF* **und Stapeldruck** (ganze Klasse – ein Blattsatz je Kind in einem Rutsch).
 
@@ -49,7 +49,7 @@ Legende: ✅ bereits in Schreibzeit · 🟡 teilweise · ⬜ geplant/Idee
 15. ⬜ *Fortschritt über Zeit* je Kind und je Rechtschreib-Phänomen (Auswertung).
 
 **Elternkommunikation**
-16. 🟡 *Übungspaket für zu Hause*: **Wort vorlesen (TTS)** vorhanden; ⬜ fertiges Wochen-Paket + Audio-Diktat noch offen.
+16. ✅ *Audio-Diktat*: **Wort vorlesen** + **Diktat-Modus** (liest die Wörter mit einstellbarer Pause vor, optional 2×) – Selbst-Diktat-Training; ⬜ fertiges Wochen-Übungspaket für zu Hause noch offen.
 17. ⬜ *Kurzer Eltern-Status* („8/10 geübt") – ohne Eltern-Cloud-Konto.
 
 **Berichte**
@@ -57,7 +57,7 @@ Legende: ✅ bereits in Schreibzeit · 🟡 teilweise · ⬜ geplant/Idee
 
 **Ablauf & Organisation**
 19. 🟡 *Eine Stelle für alles* (Klassen, Kinder, Wörter, Texte) – Grundgerüst da; ⬜ Beobachtungs-/Notizfunktion.
-20. ⬜ *Stationen-Set-Generator* (Laufdiktat, Partnerdiktat, ABC-Ordnen …) automatisch aus den aktuellen Wörtern.
+20. 🟡 *Diktatformen*: **Audio-Selbstdiktat** vorhanden; ⬜ weitere Stationen (Laufdiktat, Partnerdiktat, ABC-Ordnen) als Druckgeneratoren noch offen.
 
 **Querschnitt: Vertrauen/Datenschutz**
 21. ✅ *Local-first, offline, keine Schülerdaten in der Cloud* – Headline-Versprechen (siehe `DSGVO.md`).
