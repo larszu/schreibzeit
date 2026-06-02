@@ -286,6 +286,7 @@ Der Schlüssel wird nur lokal gespeichert. Übertragen werden ausschließlich di
 
 - [`docs/DSGVO.md`](docs/DSGVO.md) — ehrliche Datenschutz-/DSGVO-Einschätzung (auch mit KI)
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — Recherche zu Lehrkräfte-Wünschen, 20 Feature-Ideen &amp; „CRM"-Einordnung
+- [`docs/app-structure.html`](docs/app-structure.html) — interaktive Modul-/Architektur-Übersicht (im Browser öffnen)
 - [`docs/screenshots/README.md`](docs/screenshots/README.md) — Leitfaden zum Aufnehmen &amp; Anonymisieren der Screenshots
 - Quellstruktur: `src/core` (Logik) · `src/db` (Persistenz) · `src/services` (Backup, Gemini, Claude, OCR, Wörterbuch, Datei) · `src/views` (Oberfläche) · `electron/` (Desktop)
 

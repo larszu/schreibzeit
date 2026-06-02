@@ -18,6 +18,8 @@ export type WortStatus = 'neu' | 'wird_geuebt' | 'sitzt';
 export interface Klasse {
   id: Id;
   name: string;
+  /** Farbe zur besseren Unterscheidung in der Kinderliste. */
+  farbe?: string;
   notiz?: string;
   erstelltAm: number;
   geaendertAm: number;

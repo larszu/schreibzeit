@@ -3,6 +3,7 @@ import { EmptyState } from '@/components/ui';
 import { IconSparkles, IconPrint, IconTrash, IconCheck } from '@/components/icons';
 import { PrintPortal } from '@/components/print/PrintPortal';
 import { TextDocument } from '@/components/print/TextDocument';
+import { WortAuswahlListe } from '@/components/WortAuswahlListe';
 import { generateUebungstext, GeminiError } from '@/services/gemini';
 import { repository } from '@/db/repository';
 import { useLernwoerter, useUebungstexte } from '@/state/hooks';
@@ -34,6 +35,11 @@ export function UebungstextView({
   const [ergebnis, setErgebnis] = useState<Uebungstext | null>(null);
   const [druckText, setDruckText] = useState<Uebungstext | null>(null);
 
+  // Modus: KI-Text erzeugen oder eigenen Text schreiben (mit Prüfung).
+  const [modus, setModus] = useState<'ki' | 'manuell'>('ki');
+  const [eigenerText, setEigenerText] = useState('');
+  const [eigenerTitel, setEigenerTitel] = useState('');
+
   useEffect(() => {
     setErgebnis(null);
     setFehler(null);
@@ -51,6 +57,39 @@ export function UebungstextView({
     () => woerter.filter((w) => auswahl.has(w.id)).map((w) => w.wort),
     [woerter, auswahl],
   );
+
+  // Prüfung für den eigenen Text: welche gewählten Lernwörter fehlen noch?
+  const fehlendeWoerter = useMemo(() => {
+    return gewaehlteWoerter.filter((w) => {
+      const esc = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return !new RegExp(`(?<![\\p{L}])${esc}(?![\\p{L}])`, 'iu').test(eigenerText);
+    });
+  }, [gewaehlteWoerter, eigenerText]);
+
+  async function eigenenSpeichern() {
+    if (!eigenerText.trim()) return;
+    await repository.saveUebungstext({
+      kindId: kind.id,
+      titel: eigenerTitel.trim() || 'Eigener Übungstext',
+      textart: 'geschichte',
+      text: eigenerText,
+      verwendeteWoerter: gewaehlteWoerter,
+    });
+    setEigenerText('');
+    setEigenerTitel('');
+  }
+  function eigenenDrucken() {
+    druckeText({
+      id: '',
+      kindId: kind.id,
+      titel: eigenerTitel.trim() || 'Eigener Übungstext',
+      textart: 'geschichte',
+      text: eigenerText,
+      verwendeteWoerter: gewaehlteWoerter,
+      erstelltAm: Date.now(),
+      geaendertAm: Date.now(),
+    });
+  }
 
   async function generieren() {
     if (gewaehlteWoerter.length === 0) return;
@@ -122,6 +161,7 @@ export function UebungstextView({
   return (
     <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
       <div className="space-y-4">
+        {modus === 'ki' && (
         <div className="card p-4">
           <h3 className="mb-3 font-serif font-semibold text-ink">KI-Übungstext erzeugen</h3>
 
@@ -193,54 +233,110 @@ export function UebungstextView({
             </div>
           </div>
         </div>
+        )}
 
         <div className="card p-4">
           <h3 className="mb-2 font-serif font-semibold text-ink">
             Lernwörter ({auswahl.size})
           </h3>
-          <ul className="max-h-52 space-y-0.5 overflow-y-auto">
-            {woerter.map((w) => (
-              <li key={w.id}>
-                <label className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-sm hover:bg-paper-100">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 accent-brand-500"
-                    checked={auswahl.has(w.id)}
-                    onChange={() =>
-                      setAuswahl((alt) => {
-                        const neu = new Set(alt);
-                        if (neu.has(w.id)) neu.delete(w.id);
-                        else neu.add(w.id);
-                        return neu;
-                      })
-                    }
-                  />
-                  <span className="font-serif">{w.wort}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
+          <WortAuswahlListe
+            woerter={woerter}
+            maxHeight="max-h-52"
+            istGewaehlt={(id) => auswahl.has(id)}
+            onToggle={(id) =>
+              setAuswahl((alt) => {
+                const neu = new Set(alt);
+                if (neu.has(id)) neu.delete(id);
+                else neu.add(id);
+                return neu;
+              })
+            }
+          />
         </div>
 
-        <button
-          className="btn-primary w-full"
-          onClick={generieren}
-          disabled={laden || keinKey || gewaehlteWoerter.length === 0}
-        >
-          <IconSparkles width={18} height={18} />
-          {laden ? 'Text wird erzeugt …' : 'Text erzeugen'}
-        </button>
+        {modus === 'ki' && (
+          <button
+            className="btn-primary w-full"
+            onClick={generieren}
+            disabled={laden || keinKey || gewaehlteWoerter.length === 0}
+          >
+            <IconSparkles width={18} height={18} />
+            {laden ? 'Text wird erzeugt …' : 'Text erzeugen'}
+          </button>
+        )}
       </div>
 
       {/* Ergebnis + gespeicherte Texte */}
       <div className="space-y-4">
+        {/* Modusumschalter */}
+        <div className="inline-flex rounded-lg border border-paper-300 bg-white p-0.5 text-sm">
+          {(['ki', 'manuell'] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => setModus(m)}
+              className={`rounded-md px-3 py-1 font-medium transition-colors ${
+                modus === m ? 'bg-brand-500 text-white' : 'text-ink-soft hover:bg-paper-100'
+              }`}
+            >
+              {m === 'ki' ? 'KI-Text' : 'Eigener Text'}
+            </button>
+          ))}
+        </div>
+
+        {modus === 'manuell' && (
+          <div className="card p-4">
+            <input
+              className="input mb-2 font-serif font-semibold"
+              placeholder="Titel (z. B. Übungstext Montag)"
+              value={eigenerTitel}
+              onChange={(e) => setEigenerTitel(e.target.value)}
+            />
+            <textarea
+              className="input min-h-[200px] font-serif text-base leading-relaxed"
+              placeholder="Eigenen Übungstext schreiben … die ausgewählten Lernwörter sollten alle vorkommen."
+              value={eigenerText}
+              onChange={(e) => setEigenerText(e.target.value)}
+            />
+            <div className="mt-2 text-sm">
+              {gewaehlteWoerter.length === 0 ? (
+                <p className="text-ink-faint">Links Lernwörter auswählen, die vorkommen sollen.</p>
+              ) : fehlendeWoerter.length === 0 ? (
+                <p className="flex items-center gap-1 text-brand-700">
+                  <IconCheck width={16} height={16} /> Alle {gewaehlteWoerter.length} Lernwörter
+                  verwendet.
+                </p>
+              ) : (
+                <p className="text-danger-600">
+                  Noch nicht verwendet ({fehlendeWoerter.length}): {fehlendeWoerter.join(', ')}
+                </p>
+              )}
+            </div>
+            <div className="mt-3 flex justify-end gap-2">
+              <button
+                className="btn-secondary"
+                onClick={eigenenDrucken}
+                disabled={!eigenerText.trim()}
+              >
+                <IconPrint width={18} height={18} /> {t.common.drucken}
+              </button>
+              <button
+                className="btn-primary"
+                onClick={eigenenSpeichern}
+                disabled={!eigenerText.trim()}
+              >
+                <IconCheck width={18} height={18} /> Am Kind speichern
+              </button>
+            </div>
+          </div>
+        )}
+
         {fehler && (
           <div className="rounded-lg border border-danger-500/40 bg-danger-500/10 p-3 text-sm text-danger-600">
             {fehler}
           </div>
         )}
 
-        {ergebnis && (
+        {modus === 'ki' && ergebnis && (
           <div className="card p-4">
             <div className="mb-2 flex items-center gap-2">
               <input

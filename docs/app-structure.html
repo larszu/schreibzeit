@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Schreibzeit – App-Struktur</title>
+    <style>
+      :root {
+        --paper: #f6f3ec; --card: #fff; --ink: #2b2a26; --soft: #54514a; --faint: #8a8678;
+        --brand: #2f6f5e; --brand-100: #d6ebe4; --line: #ddd3bf; --accent: #cf8a36;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: var(--paper); color: var(--ink); }
+      header { padding: 18px 22px; border-bottom: 1px solid var(--line); background: #faf8f3; }
+      h1 { margin: 0 0 2px; font-size: 20px; }
+      header p { margin: 0; color: var(--soft); font-size: 13px; }
+      .hint { color: var(--faint); font-size: 12px; }
+      main { padding: 18px 22px 60px; }
+      .legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 18px; font-size: 12px; color: var(--soft); }
+      .legend b { color: var(--ink); }
+      .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; align-items: start; }
+      .col { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px; }
+      .col h2 { margin: 0 0 8px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--brand); }
+      .node { border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px; margin-bottom: 7px; cursor: pointer;
+        background: #fff; transition: all .12s ease; }
+      .node:hover { border-color: var(--brand); }
+      .node .n { font-weight: 600; font-size: 13px; }
+      .node .r { font-size: 11px; color: var(--faint); margin-top: 1px; line-height: 1.25; }
+      .node.sel { background: var(--brand); border-color: var(--brand); }
+      .node.sel .n, .node.sel .r { color: #fff; }
+      .node.dep { background: var(--brand-100); border-color: var(--brand); }
+      .node.dimmed { opacity: .25; }
+      .panel { position: sticky; top: 10px; margin-top: 16px; background: #fff; border: 1px solid var(--line);
+        border-radius: 12px; padding: 12px 14px; font-size: 13px; }
+      .panel code { background: var(--paper); padding: 1px 5px; border-radius: 5px; }
+      .panel .tag { display:inline-block; font-size:11px; color:#fff; background:var(--accent); border-radius:6px; padding:1px 7px; margin-left:6px;}
+      .notes { margin-top: 20px; background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 18px; }
+      .notes h2 { font-size: 14px; margin: 0 0 6px; }
+      .notes li { font-size: 13px; color: var(--soft); margin: 3px 0; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Schreibzeit – App-Struktur</h1>
+      <p>Interaktive Übersicht der Module als Nodes. Auf einen Node klicken → Abhängigkeiten werden hervorgehoben.</p>
+      <p class="hint">Diese Datei wird zur Codebasis gepflegt (Stand: 2026-06-02). Öffnen im Browser.</p>
+    </header>
+    <main>
+      <div class="legend">
+        <span><b>Klick</b> auf Node: Abhängigkeiten (was es nutzt) grün.</span>
+        <span>Spalten = Architektur-Schichten.</span>
+        <span>Local-first · keine Backend-Pflicht.</span>
+      </div>
+      <div class="board" id="board"></div>
+      <div class="panel" id="panel">Ein Modul auswählen, um Rolle &amp; Abhängigkeiten zu sehen.</div>
+
+      <div class="notes">
+        <h2>Refactor-Hinweise (gegen Doppelung / Hardcoding)</h2>
+        <ul>
+          <li>✅ <b>WortChips</b> – gemeinsames Chip-Raster (vorher doppelt in Text-Extraktion &amp; Grundwortschatz).</li>
+          <li>✅ <b>WortAuswahlListe</b> – gemeinsame Checkboxen-Liste (vorher 3× in Knickblatt/Wortkarten/Übungstext).</li>
+          <li>✅ <b>lernwortHelfer.uebernehmeWort(t)</b> – zentrale „Wort + Wörterbuch-Vorschläge übernehmen"-Logik.</li>
+          <li>✅ <b>print.drucke()</b> – ein Druckpfad (Web window.print, Desktop Electron-IPC) statt verstreuter window.print().</li>
+          <li>✅ <b>resolveLineaturRender()</b> + <b>Schreiblinie</b> – datengetrieben (Linien oder Bildstreifen).</li>
+          <li>➡️ Offene Idee: die fünf Druckdokumente teilen eine ähnliche Kopfzeile – ließe sich als <code>DruckKopf</code> bündeln.</li>
+        </ul>
+      </div>
+    </main>
+
+    <script>
+      // Module (Nodes) je Schicht + Kurzbeschreibung + Abhängigkeiten (Datei-Basisnamen).
+      const COLS = [
+        ['Einstieg', [
+          ['main', 'main.tsx · Mount + Service-Worker', ['App']],
+          ['App', 'App.tsx · Shell, Layout, Tabs, Startup-Laden', ['AppMenuBar','Sidebar','KarteiView','KnickblattView','UebungstextView','WortkartenView','EinstellungenView','store','hooks','repository','dictionary','fonts']],
+        ]],
+        ['State', [
+          ['store', 'state/store.ts · UI-State (Zustand) + displayName', []],
+          ['hooks', 'state/hooks.ts · Dexie Live-Queries', ['db']],
+        ]],
+        ['Ansichten', [
+          ['KarteiView', 'Kartei, Editor, Text/Foto/Grundwortschatz, Übersicht', ['repository','dictionary','lernwortHelfer','ocr','tts','grundwortschatz','WortChips','LernstandDocument','syllables','merkstellen','tokenize']],
+          ['KnickblattView', 'Knickblatt-Generator + Klassensatz-Druck', ['knickblatt','KnickblattDocument','WortAuswahlListe','repository','print','fonts']],
+          ['UebungstextView', 'KI- und manueller Übungstext (mit Prüfung)', ['gemini','TextDocument','WortAuswahlListe','repository','print']],
+          ['WortkartenView', 'Wortkarten drucken', ['WortkartenDocument','WortAuswahlListe','print']],
+          ['EinstellungenView', 'Einstellungen (Akkordeons)', ['repository','backup','fonts','LineaturCropper','grundwortschatz','knickblatt']],
+        ]],
+        ['Komponenten', [
+          ['AppMenuBar', 'Menüleiste Datei/Hilfe/Über + Einstellungen', ['fileSystem','store']],
+          ['Sidebar', 'Kinder/Klassen, Filter, Farben, Namensschlüssel', ['repository','farben','NamensschluesselDocument','print','store']],
+          ['ui', 'Modal · Accordion · Badges · EmptyState', []],
+          ['icons', 'Inline-SVG-Icons', []],
+          ['LineaturCropper', 'Bild-Zuschnitt für eigene Lineaturen', []],
+          ['WortChips', 'Anklickbare Wort-Chips', []],
+          ['WortAuswahlListe', 'Checkbox-Liste von Lernwörtern', []],
+          ['DatenschutzBanner', 'Erst-Hinweis', ['repository']],
+        ]],
+        ['Druck', [
+          ['PrintPortal', 'Portal in eigenen Druckbereich (+solo)', []],
+          ['WortAnzeige', 'Wort mit Silbenbögen/Merkstellen/Font', ['syllables']],
+          ['Schreiblinie', 'Lineatur: Linien oder Bildstreifen', ['knickblatt']],
+          ['KnickblattDocument', 'A4-quer-Knickblatt', ['knickblatt','Schreiblinie','WortAnzeige','PrintPortal']],
+          ['WortkartenDocument', 'Wortkarten-Raster', ['WortAnzeige','PrintPortal']],
+          ['TextDocument', 'Übungstext/Lückentext', ['PrintPortal']],
+          ['LernstandDocument', 'Lernstands-Übersicht', ['PrintPortal']],
+          ['NamensschluesselDocument', 'Pseudonym → Klarname (DSGVO)', ['PrintPortal']],
+        ]],
+        ['Services', [
+          ['dictionary', 'Silben (hyphen) + Artikel (90k + kuratiert)', ['syllables','merkstellen','germanNouns']],
+          ['gemini', 'Google Gemini: Text + OCR', []],
+          ['claude', 'Claude Vision: OCR', []],
+          ['ocr', 'OCR-Auswahl (Gemini/Claude)', ['gemini','claude']],
+          ['fonts', 'eigene Fonts + Andika (FontFace)', ['db']],
+          ['tts', 'Wort vorlesen (Web Speech)', []],
+          ['backup', 'Export/Import JSON', ['db']],
+          ['fileSystem', 'Öffnen/Speichern (FS Access API)', ['backup']],
+          ['print', 'drucke() / als PDF', []],
+          ['lernwortHelfer', 'Wort + Vorschläge übernehmen', ['repository','dictionary']],
+        ]],
+        ['Kern (rein, getestet)', [
+          ['syllables', 'Heuristische Silbentrennung', []],
+          ['merkstellen', 'Merkstellen-Heuristik', []],
+          ['tokenize', 'Text → Wörter + Dubletten', []],
+          ['knickblatt', 'Spalten/Lineatur-Modell, Pagination', []],
+          ['id', 'ID/Zeit-Helfer', []],
+          ['farben', 'Klassen-Farbpalette', []],
+        ]],
+        ['Daten / DB', [
+          ['db', 'Dexie-Schema (IndexedDB, v2 + fonts)', []],
+          ['repository', 'Persistenz-Abstraktion (CRUD)', ['db','dictionary','syllables','merkstellen','id']],
+          ['germanNouns', 'kuratierte Artikel + nouns.json (90k)', []],
+          ['grundwortschatz', 'Bayern/NRW-Wortlisten (lazy)', []],
+        ]],
+        ['Desktop (Electron)', [
+          ['main.cjs', 'Fenster, Menü aus, Druck-IPC', []],
+          ['preload.cjs', 'sichere Brücke (Druck)', []],
+        ]],
+      ];
+
+      const nodes = {};
+      COLS.forEach(([, items]) => items.forEach(([id, role, deps]) => (nodes[id] = { id, role, deps })));
+
+      const board = document.getElementById('board');
+      const panel = document.getElementById('panel');
+      const els = {};
+      for (const [title, items] of COLS) {
+        const col = document.createElement('div');
+        col.className = 'col';
+        col.innerHTML = '<h2>' + title + '</h2>';
+        for (const [id, role] of items) {
+          const n = document.createElement('div');
+          n.className = 'node';
+          n.innerHTML = '<div class="n">' + id + '</div><div class="r">' + role + '</div>';
+          n.onclick = () => select(id);
+          col.appendChild(n);
+          els[id] = n;
+        }
+        board.appendChild(col);
+      }
+
+      function dependents(id) {
+        return Object.values(nodes).filter((n) => n.deps.includes(id)).map((n) => n.id);
+      }
+      function select(id) {
+        const node = nodes[id];
+        const deps = new Set(node.deps);
+        const used = new Set(dependents(id));
+        for (const [nid, el] of Object.entries(els)) {
+          el.classList.remove('sel', 'dep', 'dimmed');
+          if (nid === id) el.classList.add('sel');
+          else if (deps.has(nid)) el.classList.add('dep');
+          else if (used.has(nid)) el.classList.add('dep');
+          else el.classList.add('dimmed');
+        }
+        panel.innerHTML =
+          '<b>' + id + '</b><span class="tag">Modul</span><div style="margin-top:6px">' + node.role + '</div>' +
+          '<div style="margin-top:8px"><b>nutzt:</b> ' + (node.deps.length ? node.deps.join(', ') : '—') + '</div>' +
+          '<div style="margin-top:4px"><b>genutzt von:</b> ' + (dependents(id).join(', ') || '—') + '</div>' +
+          '<div style="margin-top:8px"><button onclick="reset()" style="font:inherit;cursor:pointer">Auswahl aufheben</button></div>';
+      }
+      function reset() {
+        for (const el of Object.values(els)) el.classList.remove('sel', 'dep', 'dimmed');
+        panel.innerHTML = 'Ein Modul auswählen, um Rolle &amp; Abhängigkeiten zu sehen.';
+      }
+      window.select = select; window.reset = reset;
+    </script>
+  </body>
+</html>

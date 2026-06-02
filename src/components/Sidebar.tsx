@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   IconPlus,
   IconSearch,
@@ -14,6 +14,7 @@ import { repository } from '@/db/repository';
 import { displayName } from '@/state/store';
 import { t } from '@/i18n/de';
 import { drucke } from '@/services/print';
+import { KLASSEN_FARBEN, farbeFuerIndex } from '@/core/farben';
 import type { Einstellungen, Kind, Klasse, Lernstand } from '@/types';
 
 const LERNSTAENDE: Lernstand[] = ['klasse1', 'klasse2', 'klasse3', 'klasse4', 'foerder', 'lrs'];
@@ -32,15 +33,25 @@ export function Sidebar({
   onSelect: (id: string) => void;
 }) {
   const [suche, setSuche] = useState('');
+  const [klasseFilter, setKlasseFilter] = useState<string>('alle');
   const [kindModal, setKindModal] = useState<{ offen: boolean; kind?: Kind }>({ offen: false });
   const [klassenModal, setKlassenModal] = useState(false);
   const [schluesselDruck, setSchluesselDruck] = useState(false);
 
+  const klasseFarbe = useMemo(() => {
+    const m = new Map<string, string | undefined>();
+    klassen.forEach((c) => m.set(c.id, c.farbe));
+    return m;
+  }, [klassen]);
+
   const gefiltert = useMemo(() => {
     const q = suche.trim().toLowerCase();
-    if (!q) return kinder;
-    return kinder.filter((k) => k.name.toLowerCase().includes(q));
-  }, [kinder, suche]);
+    return kinder.filter((k) => {
+      if (klasseFilter === 'ohne' && k.klasseId) return false;
+      if (klasseFilter !== 'alle' && klasseFilter !== 'ohne' && k.klasseId !== klasseFilter) return false;
+      return !q || k.name.toLowerCase().includes(q);
+    });
+  }, [kinder, suche, klasseFilter]);
 
   return (
     <aside className="flex h-full flex-col border-r border-paper-200 bg-paper-50">
@@ -72,6 +83,23 @@ export function Sidebar({
             <IconUsers width={18} height={18} />
           </button>
         </div>
+        {klassen.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            <FilterChip aktiv={klasseFilter === 'alle'} onClick={() => setKlasseFilter('alle')}>
+              Alle
+            </FilterChip>
+            {klassen.map((c) => (
+              <FilterChip
+                key={c.id}
+                aktiv={klasseFilter === c.id}
+                farbe={c.farbe}
+                onClick={() => setKlasseFilter(c.id)}
+              >
+                {c.name}
+              </FilterChip>
+            ))}
+          </div>
+        )}
       </div>
 
       <nav className="mt-3 flex-1 overflow-y-auto px-2 pb-2">
@@ -91,14 +119,25 @@ export function Sidebar({
                       aktiv ? 'bg-brand-100 text-brand-800' : 'hover:bg-paper-200'
                     }`}
                   >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium">
-                        {displayName(kind.name, einstellungen.nurInitialen)}
-                      </span>
-                      <span className="block text-xs text-ink-faint">
-                        {t.lernstand[kind.lernstand]}
-                        {kind.klasseId &&
-                          ` · ${klassen.find((c) => c.id === kind.klasseId)?.name ?? ''}`}
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{
+                          backgroundColor: kind.klasseId
+                            ? klasseFarbe.get(kind.klasseId) || '#c9c4b5'
+                            : '#d8d4c8',
+                        }}
+                        aria-hidden
+                      />
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium">
+                          {displayName(kind.name, einstellungen.nurInitialen)}
+                        </span>
+                        <span className="block text-xs text-ink-faint">
+                          {t.lernstand[kind.lernstand]}
+                          {kind.klasseId &&
+                            ` · ${klassen.find((c) => c.id === kind.klasseId)?.name ?? ''}`}
+                        </span>
                       </span>
                     </span>
                     <span
@@ -340,7 +379,7 @@ function KlassenModal({
 
   async function anlegen() {
     if (!neu.trim()) return;
-    await repository.saveKlasse({ name: neu.trim() });
+    await repository.saveKlasse({ name: neu.trim(), farbe: farbeFuerIndex(klassen.length) });
     setNeu('');
   }
 
@@ -387,8 +426,17 @@ function KlasseZeile({ klasse }: { klasse: Klasse }) {
     }
   }
 
+  function setFarbe(farbe: string) {
+    void repository.saveKlasse({ id: klasse.id, name: klasse.name, farbe });
+  }
+
   return (
     <li className="flex items-center gap-2 px-3 py-2">
+      <span
+        className="h-3.5 w-3.5 shrink-0 rounded-full border border-black/10"
+        style={{ backgroundColor: klasse.farbe || '#c9c4b5' }}
+        aria-hidden
+      />
       {bearbeiten ? (
         <input
           className="input"
@@ -401,12 +449,50 @@ function KlasseZeile({ klasse }: { klasse: Klasse }) {
       ) : (
         <span className="flex-1 text-sm">{klasse.name}</span>
       )}
-      <button className="btn-ghost p-1.5" onClick={() => setBearbeiten(true)} aria-label="Bearbeiten">
+      <div className="flex items-center gap-0.5">
+        {KLASSEN_FARBEN.map((f) => (
+          <button
+            key={f}
+            onClick={() => setFarbe(f)}
+            className={`h-4 w-4 rounded-full border ${
+              klasse.farbe === f ? 'border-ink' : 'border-transparent'
+            }`}
+            style={{ backgroundColor: f }}
+            aria-label={`Farbe ${f}`}
+            title="Farbe wählen"
+          />
+        ))}
+      </div>
+      <button className="btn-ghost p-1.5" onClick={() => setBearbeiten(true)} aria-label="Umbenennen">
         <IconEdit width={16} height={16} />
       </button>
       <button className="btn-ghost p-1.5 text-danger-500" onClick={loeschen} aria-label="Löschen">
         <IconTrash width={16} height={16} />
       </button>
     </li>
+  );
+}
+
+function FilterChip({
+  aktiv,
+  farbe,
+  onClick,
+  children,
+}: {
+  aktiv: boolean;
+  farbe?: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
+        aktiv ? 'border-brand-400 bg-brand-100 text-brand-700' : 'border-paper-300 text-ink-soft hover:bg-paper-200'
+      }`}
+    >
+      {farbe && <span className="h-2 w-2 rounded-full" style={{ backgroundColor: farbe }} />}
+      {children}
+    </button>
   );
 }

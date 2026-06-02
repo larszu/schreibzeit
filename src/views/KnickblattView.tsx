@@ -15,6 +15,7 @@ import {
   defaultKnickspalten,
   resolveLineaturRender,
 } from '@/core/knickblatt';
+import { WortAuswahlListe } from '@/components/WortAuswahlListe';
 import { useFonts, useLernwoerter } from '@/state/hooks';
 import { displayName } from '@/state/store';
 import { repository } from '@/db/repository';
@@ -76,21 +77,23 @@ export function KnickblattView({
   );
   const [auswahl, setAuswahl] = useState<Set<string>>(new Set());
   const [thema, setThema] = useState('');
-  const [stapel, setStapel] = useState(false);
+  // Druckziel: '' = nur dieses Kind, sonst eine Klassen-ID (Klassensatz).
+  const [druckKlasse, setDruckKlasse] = useState('');
   const [klassenDaten, setKlassenDaten] = useState<{ kind: Kind; woerter: Lernwort[] }[]>([]);
   const [dragId, setDragId] = useState<string | null>(null);
   const [previewRef, scale] = useFitScale(PAGE_WIDTH_PX);
+  const stapel = druckKlasse !== '';
 
-  // Stapeldruck: Wörter aller Kinder der Klasse laden (eine Seite je Kind).
+  // Stapeldruck: Wörter aller Kinder der gewählten Klasse laden (eine Seite je Kind).
   useEffect(() => {
-    if (!stapel || !kind.klasseId) {
+    if (!druckKlasse) {
       setKlassenDaten([]);
       return;
     }
     let abbruch = false;
     void (async () => {
       const alle = await repository.getKinder();
-      const klasse = alle.filter((k) => k.klasseId === kind.klasseId);
+      const klasse = alle.filter((k) => k.klasseId === druckKlasse);
       const daten = await Promise.all(
         klasse.map(async (k) => ({ kind: k, woerter: await repository.getLernwoerter(k.id) })),
       );
@@ -99,7 +102,7 @@ export function KnickblattView({
     return () => {
       abbruch = true;
     };
-  }, [stapel, kind.klasseId]);
+  }, [druckKlasse]);
 
   // Vorauswahl: alle Wörter aufnehmen, sobald sie geladen sind (pro Kind einmal).
   const initialisiertFuer = useRef<string | null>(null);
@@ -124,7 +127,6 @@ export function KnickblattView({
     schule: einstellungen.schulName || undefined,
   });
   const kopf = kopfFuer(kind);
-  const klassenName = klassen.find((c) => c.id === kind.klasseId)?.name;
   const lineaturRender = resolveLineaturRender(config.lineatur, einstellungen.customLineaturen);
 
   // Schnellvorlagen: Standardwerte bzw. ein LRS-/leicht-Preset.
@@ -434,40 +436,47 @@ export function KnickblattView({
               </button>
             ))}
           </div>
-          <ul className="max-h-56 space-y-0.5 overflow-y-auto">
-            {woerter.map((w) => (
-              <li key={w.id}>
-                <label className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-sm hover:bg-paper-100">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 accent-brand-500"
-                    checked={auswahl.has(w.id)}
-                    onChange={() =>
-                      setAuswahl((alt) => {
-                        const neu = new Set(alt);
-                        if (neu.has(w.id)) neu.delete(w.id);
-                        else neu.add(w.id);
-                        return neu;
-                      })
-                    }
-                  />
-                  <span className="font-serif">{w.wort}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
+          <WortAuswahlListe
+            woerter={woerter}
+            istGewaehlt={(id) => auswahl.has(id)}
+            onToggle={(id) =>
+              setAuswahl((alt) => {
+                const neu = new Set(alt);
+                if (neu.has(id)) neu.delete(id);
+                else neu.add(id);
+                return neu;
+              })
+            }
+          />
         </div>
       </div>
 
       {/* Vorschau */}
       <div>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm text-ink-soft">
-            Vorschau · A4 quer ·{' '}
-            {stapel
-              ? `${klassenDaten.length} Kinder der Klasse ${klassenName ?? ''}`
-              : `${Math.ceil(ausgewaehlteWoerter.length / config.woerterProBlatt) || 1} Blatt`}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-sm text-ink-soft" htmlFor="kb-druckziel">
+              Drucken für:
+            </label>
+            <select
+              id="kb-druckziel"
+              className="input max-w-xs py-1"
+              value={druckKlasse}
+              onChange={(e) => setDruckKlasse(e.target.value)}
+            >
+              <option value="">Dieses Kind ({kopf.kindName})</option>
+              {klassen.map((c) => (
+                <option key={c.id} value={c.id}>
+                  Klassensatz: {c.name} (alle Wörter je Kind)
+                </option>
+              ))}
+            </select>
+            <span className="text-xs text-ink-faint">
+              {stapel
+                ? `${klassenDaten.length} Kinder`
+                : `${Math.ceil(ausgewaehlteWoerter.length / config.woerterProBlatt) || 1} Blatt`}
+            </span>
+          </div>
           <button
             className="btn-primary"
             onClick={() => drucke()}
@@ -476,18 +485,6 @@ export function KnickblattView({
             <IconPrint width={18} height={18} /> {t.common.drucken}
           </button>
         </div>
-        {kind.klasseId && (
-          <label className="mb-3 flex items-center gap-2 rounded-lg border border-paper-200 bg-paper-50 px-3 py-2 text-sm">
-            <input
-              type="checkbox"
-              className="h-4 w-4 accent-brand-500"
-              checked={stapel}
-              onChange={(e) => setStapel(e.target.checked)}
-            />
-            Ganze Klasse {klassenName ? `(${klassenName})` : ''} drucken – ein Blattsatz je Kind (mit
-            allen Wörtern des Kindes)
-          </label>
-        )}
         <div ref={previewRef} className="overflow-hidden rounded-xl2 bg-paper-200 p-4">
           {/* `zoom` skaliert inkl. Layouthöhe, sodass keine Leerfläche entsteht. */}
           <div className="print-preview" style={{ zoom: scale } as React.CSSProperties}>

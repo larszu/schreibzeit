@@ -4,6 +4,7 @@ import { IconPrint } from '@/components/icons';
 import { PrintPortal } from '@/components/print/PrintPortal';
 import { useFitScale } from '@/components/print/useFitScale';
 import { WortkartenDocument } from '@/components/print/WortkartenDocument';
+import { WortAuswahlListe } from '@/components/WortAuswahlListe';
 import { useLernwoerter } from '@/state/hooks';
 import { t } from '@/i18n/de';
 import { drucke } from '@/services/print';
@@ -23,6 +24,7 @@ export function WortkartenView({
   const [spalten, setSpalten] = useState(3);
   const [mitMerkstellen, setMitMerkstellen] = useState(true);
   const [mitArtikel, setMitArtikel] = useState(true);
+  const [mitSilben, setMitSilben] = useState(false);
   const [previewRef, scale] = useFitScale(PAGE_WIDTH_PX);
 
   const initialisiertFuer = useRef<string | null>(null);
@@ -82,6 +84,15 @@ export function WortkartenView({
               />
               Merkstellen markieren
             </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-brand-500"
+                checked={mitSilben}
+                onChange={(e) => setMitSilben(e.target.checked)}
+              />
+              Silbenbögen vordrucken
+            </label>
           </div>
         </div>
 
@@ -100,28 +111,19 @@ export function WortkartenView({
               </button>
             </div>
           </div>
-          <ul className="max-h-64 space-y-0.5 overflow-y-auto">
-            {woerter.map((w) => (
-              <li key={w.id}>
-                <label className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-sm hover:bg-paper-100">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 accent-brand-500"
-                    checked={auswahl.has(w.id)}
-                    onChange={() =>
-                      setAuswahl((alt) => {
-                        const neu = new Set(alt);
-                        if (neu.has(w.id)) neu.delete(w.id);
-                        else neu.add(w.id);
-                        return neu;
-                      })
-                    }
-                  />
-                  <span className="font-serif">{w.wort}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
+          <WortAuswahlListe
+            woerter={woerter}
+            maxHeight="max-h-64"
+            istGewaehlt={(id) => auswahl.has(id)}
+            onToggle={(id) =>
+              setAuswahl((alt) => {
+                const neu = new Set(alt);
+                if (neu.has(id)) neu.delete(id);
+                else neu.add(id);
+                return neu;
+              })
+            }
+          />
         </div>
       </div>
 
@@ -143,6 +145,7 @@ export function WortkartenView({
               spalten={spalten}
               mitMerkstellen={mitMerkstellen}
               mitArtikel={mitArtikel}
+              mitSilben={mitSilben}
             />
           </div>
         </div>
@@ -154,6 +157,7 @@ export function WortkartenView({
           spalten={spalten}
           mitMerkstellen={mitMerkstellen}
           mitArtikel={mitArtikel}
+          mitSilben={mitSilben}
         />
       </PrintPortal>
     </div>
