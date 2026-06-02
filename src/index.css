@@ -88,14 +88,17 @@ body,
   }
 
   html,
-  body {
+  body,
+  #root {
     background: white !important;
     margin: 0 !important;
     padding: 0 !important;
+    height: auto !important;
   }
 
-  /* Alles außer dem Druckbereich ausblenden. */
-  body > #root .app-shell {
+  /* Die gesamte App-Oberfläche ausblenden – #root nimmt sonst (height:100%)
+     eine ganze leere Seite ein und schiebt den Druckbereich nach hinten. */
+  body > #root {
     display: none !important;
   }
 

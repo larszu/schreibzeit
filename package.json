@@ -78,6 +78,9 @@
       ],
       "category": "public.app-category.education"
     },
+    "dmg": {
+      "artifactName": "Schreibzeit-${version}.dmg"
+    },
     "win": {
       "target": [
         "nsis",
@@ -87,7 +90,8 @@
     "nsis": {
       "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Schreibzeit-Setup-${version}.exe"
     },
     "portable": {
       "artifactName": "Schreibzeit-Portable-${version}.exe"
@@ -96,7 +100,8 @@
       "target": [
         "AppImage"
       ],
-      "category": "Education"
+      "category": "Education",
+      "artifactName": "Schreibzeit-${version}.AppImage"
     }
   }
 }

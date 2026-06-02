@@ -19,14 +19,18 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Version aus Tag übernehmen
+        shell: bash
+        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
       - run: npm ci
       - run: npm run lint
       - run: npm test
       - run: npm run build
       - name: Web-Build als ZIP packen
+        shell: bash
         run: |
           cd dist
-          zip -r ../schreibzeit-web.zip .
+          zip -r "../Schreibzeit-Web-${GITHUB_REF_NAME}.zip" .
       - name: Web-Build als Artefakt
         uses: actions/upload-artifact@v4
         with:
@@ -35,7 +39,7 @@ jobs:
       - name: Web-ZIP ans Release anhängen
         uses: softprops/action-gh-release@v2
         with:
-          files: schreibzeit-web.zip
+          files: Schreibzeit-Web-*.zip
 
   desktop:
     strategy:
@@ -56,6 +60,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Version aus Tag übernehmen
+        shell: bash
+        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
       - run: npm ci
       - name: Desktop-App bauen
         run: ${{ matrix.build }}

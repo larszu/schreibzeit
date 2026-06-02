@@ -109,6 +109,17 @@ export const IconPanelLeft = (p: P) => (
     <path d="M9 4v16" />
   </svg>
 );
+export const IconSpeaker = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M11 5 6 9H2v6h4l5 4V5z" />
+    <path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14" />
+  </svg>
+);
+export const IconList = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+  </svg>
+);
 export const IconCamera = (p: P) => (
   <svg {...base(p)}>
     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />

@@ -16,9 +16,15 @@ import { tokenize, buildExistingSet, normalizeForCompare } from '@/core/tokenize
 import { formatSyllables } from '@/core/syllables';
 import { lookupWort, woerterbuchSilben } from '@/services/dictionary';
 import { erkenneTextAusFoto } from '@/services/ocr';
-import { IconCamera } from '@/components/icons';
+import { sprichWort, ttsVerfuegbar } from '@/services/tts';
+import { IconCamera, IconSpeaker, IconList } from '@/components/icons';
+import { PrintPortal } from '@/components/print/PrintPortal';
+import { LernstandDocument } from '@/components/print/LernstandDocument';
+import { displayName } from '@/state/store';
 import { t } from '@/i18n/de';
 import type { Einstellungen, Kind, Lernwort, WortStatus } from '@/types';
+
+const TTS_OK = ttsVerfuegbar();
 
 const STATUS_REIHENFOLGE: WortStatus[] = ['neu', 'wird_geuebt', 'sitzt'];
 
@@ -34,6 +40,7 @@ export function KarteiView({
   const [editor, setEditor] = useState<{ offen: boolean; wort?: Lernwort }>({ offen: false });
   const [extraktorOffen, setExtraktorOffen] = useState(false);
   const [auswahl, setAuswahl] = useState<Set<string>>(new Set());
+  const [uebersichtDruck, setUebersichtDruck] = useState(false);
 
   const gefiltert = useMemo(
     () => (filter === 'alle' ? woerter : woerter.filter((w) => w.status === filter)),
@@ -68,6 +75,18 @@ export function KarteiView({
         <button className="btn-secondary" onClick={() => setExtraktorOffen(true)}>
           <IconSparkles width={18} height={18} /> Aus Text herauspicken
         </button>
+        {woerter.length > 0 && (
+          <button
+            className="btn-ghost"
+            onClick={() => {
+              setUebersichtDruck(true);
+              setTimeout(() => window.print(), 60);
+            }}
+            title="Lernstands-Übersicht drucken"
+          >
+            <IconList width={18} height={18} /> Übersicht
+          </button>
+        )}
 
         <div className="ml-auto flex items-center gap-1 rounded-lg border border-paper-300 bg-white p-0.5">
           {(['alle', ...STATUS_REIHENFOLGE] as const).map((f) => (
@@ -136,6 +155,19 @@ export function KarteiView({
         vorhandene={woerter}
         onClose={() => setExtraktorOffen(false)}
       />
+
+      {uebersichtDruck && (
+        <PrintPortal>
+          <LernstandDocument
+            kindName={displayName(kind.name, einstellungen.nurInitialen)}
+            lernstand={t.lernstand[kind.lernstand]}
+            datum={new Date().toLocaleDateString('de-DE')}
+            woerter={woerter}
+            lehrkraft={einstellungen.lehrkraftName || undefined}
+            schule={einstellungen.schulName || undefined}
+          />
+        </PrintPortal>
+      )}
     </div>
   );
 }
@@ -206,6 +238,16 @@ function LernwortZeile({
         <StatusBadge status={wort.status} />
       </button>
       <div className="flex shrink-0">
+        {TTS_OK && (
+          <button
+            className="btn-ghost p-1.5"
+            onClick={() => sprichWort(wort.wort)}
+            aria-label="Wort vorlesen"
+            title="Wort vorlesen"
+          >
+            <IconSpeaker width={16} height={16} />
+          </button>
+        )}
         <button className="btn-ghost p-1.5" onClick={onEdit} aria-label="Bearbeiten">
           <IconEdit width={16} height={16} />
         </button>
@@ -552,6 +594,37 @@ function TextExtraktor({
     setHinzugefuegt((alt) => new Set(alt).add(normalizeForCompare(token.wort)));
   }
 
+  // Offene (noch nicht vorhandene) Wörter der Tokenliste, ohne Dubletten.
+  const offeneWoerter = useMemo(() => {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const tk of tokens) {
+      const n = normalizeForCompare(tk.wort);
+      if (existierende.has(n) || hinzugefuegt.has(n) || seen.has(n)) continue;
+      seen.add(n);
+      result.push(tk.wort);
+    }
+    return result;
+  }, [tokens, existierende, hinzugefuegt]);
+
+  async function alleUebernehmen() {
+    const woerter = offeneWoerter;
+    for (const w of woerter) {
+      const info = lookupWort(w);
+      await repository.addLernwort(kind.id, w, {
+        quelle: 'Text-Extraktion',
+        silben: info.silben,
+        merkstellen: info.merkstellen,
+        artikel: info.artikel || '',
+      });
+    }
+    setHinzugefuegt((alt) => {
+      const s = new Set(alt);
+      woerter.forEach((w) => s.add(normalizeForCompare(w)));
+      return s;
+    });
+  }
+
   async function fotoGewaehlt(file: File) {
     setOcrLaden(true);
     setOcrInfo(null);
@@ -605,9 +678,16 @@ function TextExtraktor({
         />
         {tokens.length > 0 && (
           <div className="rounded-lg border border-paper-200 bg-paper-50 p-3">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-faint">
-              Wörter anklicken zum Übernehmen
-            </p>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-ink-faint">
+                Wörter anklicken zum Übernehmen
+              </p>
+              {offeneWoerter.length > 0 && (
+                <button className="btn-ghost py-1 text-xs" onClick={alleUebernehmen}>
+                  <IconCheck width={14} height={14} /> Alle übernehmen ({offeneWoerter.length})
+                </button>
+              )}
+            </div>
             <div className="flex flex-wrap gap-1.5">
               {tokens.map((token) => {
                 const norm = normalizeForCompare(token.wort);

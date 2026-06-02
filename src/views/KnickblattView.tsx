@@ -15,6 +15,7 @@ import {
 } from '@/core/knickblatt';
 import { useLernwoerter } from '@/state/hooks';
 import { displayName } from '@/state/store';
+import { repository } from '@/db/repository';
 import { t } from '@/i18n/de';
 import type {
   Einstellungen,
@@ -22,6 +23,7 @@ import type {
   Klasse,
   Knickspalte,
   KnickblattConfig,
+  Lernwort,
   Lineatur,
   SpaltenTyp,
 } from '@/types';
@@ -70,7 +72,29 @@ export function KnickblattView({
   );
   const [auswahl, setAuswahl] = useState<Set<string>>(new Set());
   const [thema, setThema] = useState('');
+  const [stapel, setStapel] = useState(false);
+  const [klassenDaten, setKlassenDaten] = useState<{ kind: Kind; woerter: Lernwort[] }[]>([]);
   const [previewRef, scale] = useFitScale(PAGE_WIDTH_PX);
+
+  // Stapeldruck: Wörter aller Kinder der Klasse laden (eine Seite je Kind).
+  useEffect(() => {
+    if (!stapel || !kind.klasseId) {
+      setKlassenDaten([]);
+      return;
+    }
+    let abbruch = false;
+    void (async () => {
+      const alle = await repository.getKinder();
+      const klasse = alle.filter((k) => k.klasseId === kind.klasseId);
+      const daten = await Promise.all(
+        klasse.map(async (k) => ({ kind: k, woerter: await repository.getLernwoerter(k.id) })),
+      );
+      if (!abbruch) setKlassenDaten(daten);
+    })();
+    return () => {
+      abbruch = true;
+    };
+  }, [stapel, kind.klasseId]);
 
   // Vorauswahl: alle Wörter aufnehmen, sobald sie geladen sind (pro Kind einmal).
   const initialisiertFuer = useRef<string | null>(null);
@@ -86,14 +110,36 @@ export function KnickblattView({
     [woerter, auswahl],
   );
 
-  const kopf: KnickblattKopf = {
-    kindName: displayName(kind.name, einstellungen.nurInitialen),
-    klasse: klassen.find((c) => c.id === kind.klasseId)?.name,
+  const kopfFuer = (k: Kind): KnickblattKopf => ({
+    kindName: displayName(k.name, einstellungen.nurInitialen),
+    klasse: klassen.find((c) => c.id === k.klasseId)?.name,
     datum: new Date().toLocaleDateString('de-DE'),
     thema: thema.trim() || undefined,
     lehrkraft: einstellungen.lehrkraftName || undefined,
     schule: einstellungen.schulName || undefined,
-  };
+  });
+  const kopf = kopfFuer(kind);
+  const klassenName = klassen.find((c) => c.id === kind.klasseId)?.name;
+
+  // Schnellvorlagen: Standardwerte bzw. ein LRS-/leicht-Preset.
+  function presetStandard() {
+    setConfig((c) => ({
+      ...c,
+      lineatur: einstellungen.standardLineatur,
+      woerterProBlatt: einstellungen.standardWoerterProBlatt,
+      vorlageMitSilben: false,
+      vorlageMitMerkstellen: false,
+    }));
+  }
+  function presetLRS() {
+    setConfig((c) => ({
+      ...c,
+      lineatur: 'klasse1',
+      woerterProBlatt: 6,
+      vorlageMitSilben: true,
+      vorlageMitMerkstellen: true,
+    }));
+  }
 
   function setSpalten(spalten: Knickspalte[]) {
     setConfig((c) => ({ ...c, spalten }));
@@ -156,6 +202,21 @@ export function KnickblattView({
         <div className="card p-4">
           <h3 className="mb-3 font-serif font-semibold text-ink">Blatt-Einstellungen</h3>
           <div className="space-y-3">
+            <div>
+              <span className="label">Schnellvorlage</span>
+              <div className="flex gap-2">
+                <button className="btn-secondary flex-1 py-1.5 text-xs" onClick={presetStandard}>
+                  Standard
+                </button>
+                <button
+                  className="btn-secondary flex-1 py-1.5 text-xs"
+                  onClick={presetLRS}
+                  title="Größere Lineatur, weniger Wörter, Silbenbögen & Merkstellen vorgedruckt"
+                >
+                  LRS / leicht
+                </button>
+              </div>
+            </div>
             <div>
               <label className="label" htmlFor="kb-thema">
                 Thema (optional)
@@ -350,35 +411,67 @@ export function KnickblattView({
 
       {/* Vorschau */}
       <div>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-ink-soft">
             Vorschau · A4 quer ·{' '}
-            {Math.ceil(ausgewaehlteWoerter.length / config.woerterProBlatt) || 1} Blatt
+            {stapel
+              ? `${klassenDaten.length} Kinder der Klasse ${klassenName ?? ''}`
+              : `${Math.ceil(ausgewaehlteWoerter.length / config.woerterProBlatt) || 1} Blatt`}
           </p>
           <button
             className="btn-primary"
             onClick={() => window.print()}
-            disabled={ausgewaehlteWoerter.length === 0}
+            disabled={stapel ? klassenDaten.length === 0 : ausgewaehlteWoerter.length === 0}
           >
             <IconPrint width={18} height={18} /> {t.common.drucken}
           </button>
         </div>
+        {kind.klasseId && (
+          <label className="mb-3 flex items-center gap-2 rounded-lg border border-paper-200 bg-paper-50 px-3 py-2 text-sm">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-brand-500"
+              checked={stapel}
+              onChange={(e) => setStapel(e.target.checked)}
+            />
+            Ganze Klasse {klassenName ? `(${klassenName})` : ''} drucken – ein Blattsatz je Kind (mit
+            allen Wörtern des Kindes)
+          </label>
+        )}
         <div ref={previewRef} className="overflow-hidden rounded-xl2 bg-paper-200 p-4">
           {/* `zoom` skaliert inkl. Layouthöhe, sodass keine Leerfläche entsteht. */}
           <div className="print-preview" style={{ zoom: scale } as React.CSSProperties}>
             <KnickblattDocument woerter={ausgewaehlteWoerter} config={config} kopf={kopf} />
           </div>
         </div>
-        {ausgewaehlteWoerter.length === 0 && (
-          <p className="mt-2 flex items-center gap-1 text-sm text-ink-faint">
-            <IconCheck width={16} height={16} /> Wählen Sie links Wörter aus.
+        {stapel ? (
+          <p className="mt-2 text-sm text-ink-faint">
+            Vorschau zeigt {kopf.kindName}. Beim Drucken wird für jedes Kind der Klasse ein eigener
+            Blattsatz erzeugt.
           </p>
+        ) : (
+          ausgewaehlteWoerter.length === 0 && (
+            <p className="mt-2 flex items-center gap-1 text-sm text-ink-faint">
+              <IconCheck width={16} height={16} /> Wählen Sie links Wörter aus.
+            </p>
+          )
         )}
       </div>
 
       {/* Druckbereich (nur beim Drucken sichtbar) */}
       <PrintPortal>
-        <KnickblattDocument woerter={ausgewaehlteWoerter} config={config} kopf={kopf} />
+        {stapel ? (
+          klassenDaten.map((d) => (
+            <KnickblattDocument
+              key={d.kind.id}
+              woerter={d.woerter}
+              config={config}
+              kopf={kopfFuer(d.kind)}
+            />
+          ))
+        ) : (
+          <KnickblattDocument woerter={ausgewaehlteWoerter} config={config} kopf={kopf} />
+        )}
       </PrintPortal>
     </div>
   );

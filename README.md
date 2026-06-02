@@ -116,6 +116,7 @@ Sie brauchen **nichts zu installieren, was Adminrechte erfordert**, und keine Pr
 - Pro Wort: Artikel, Wortart, **Silbentrennung**, **Merkstellen**, Status, Quelle, Notiz
 - Status `neu` · `wird geübt` · `sitzt` mit Filter &amp; Sortierung
 - Hinzufügen, bearbeiten, löschen, duplizieren, Massenaktionen
+- **Wort vorlesen** (Sprachausgabe, offline) &amp; **Lernstands-Übersicht drucken** (für Elterngespräche/Doku)
 - Durchsuchbare Sidebar, schnelles Umschalten zwischen Kindern
 
 ---
@@ -124,7 +125,7 @@ Sie brauchen **nichts zu installieren, was Adminrechte erfordert**, und keine Pr
 - Kindertext einfügen **oder Foto hochladen** → Wörter anklicken → in die Kartei übernehmen
 - **Foto-Texterkennung (OCR):** Standard über Gemini, optional über **Claude Vision** (besonders gut bei Handschrift, in den Einstellungen aktivierbar)
 - **Dublettenprüfung** gegen die vorhandene Kartei (bereits vorhandene Wörter markiert)
-- Automatischer Silben-, Artikel- &amp; Merkstellen-Vorschlag beim Übernehmen
+- **„Alle übernehmen"** für ganze Listen; automatischer Silben-, Artikel- &amp; Merkstellen-Vorschlag
 
 ---
 
@@ -142,6 +143,7 @@ Sie brauchen **nichts zu installieren, was Adminrechte erfordert**, und keine Pr
   - **Lernwort (Vorlage)** · **Silben schwingen** · **Stellen markieren** · **Auswendig schreiben** (mit gestrichelter **Falzlinie**) · **Partner diktiert**
 - FRESCH-Presets: **Verlängern**, **Ableiten**, **Merkwort**
 - **Eigene Spalten** hinzufügen, vorhandene **umbenennen, löschen** und sortieren
+- **Schnellvorlagen** (Standard / „LRS · leicht") und **Stapeldruck für die ganze Klasse** (ein Blattsatz je Kind)
 - Echte **Grundschul-Lineatur** (Klasse 1–4 / Haus-Lineatur mit Mittelband), mm-genau
 - **Differenzierung**: Vorlage mit vorgedruckten Silbenbögen und/oder Merkstellen
 - Wortauswahl per Filter (Status, neueste, Zufall) · **Live-Vorschau** · Druck/PDF

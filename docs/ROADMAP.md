@@ -29,18 +29,18 @@ Legende: ✅ bereits in Schreibzeit · 🟡 teilweise · ⬜ geplant/Idee
 1. ✅ *Eine Wortliste → viele Übungen*: Knickblatt, Wortkarten, KI-Text aus denselben Lernwörtern.
 2. ✅ *KI-Übungstext* webt die Lernwörter eines Kindes in Geschichte/Lückentext/Quatschsätze ein.
 3. ⬜ *Ein-Klick-Niveaustufen* (Kurz-/Grund-/Langtext) für jedes erzeugte Blatt („dreifach differenziertes Diktat").
-4. 🟡 *Immer editierbare Listen ohne Längenbegrenzung*, importierbar aus Lehrwerk-Wortschätzen (FRESCH/Zebra) – aktuell JSON-Import; CSV-Import geplant.
+4. 🟡 *Immer editierbare Listen ohne Längenbegrenzung* – **„Alle übernehmen"** für ganze eingefügte/erkannte Listen vorhanden; CSV-/Lehrwerk-Import (FRESCH/Zebra) noch offen.
 
 **Drucken & Arbeitsblätter**
 5. ✅ *Knickblatt-Generator* (Vorlage → schwingen → markieren → knicken → auswendig).
 6. 🟡 *Grundschul-Lineaturen* (Klasse 1–4 / Haus) vorhanden; ⬜ *Grundschrift/Schreibschrift-Fonts* und ⬜ *gepunktete Nachspur-Schrift* fehlen noch.
 7. ✅ *Silbenbögen* (zuschaltbar) und Merkstellen-Markierung auf der Vorlage.
-8. 🟡 *Druckfertiges PDF*; ⬜ *Stapeldruck* (ganze Klasse / pro Kind in einem Rutsch).
+8. ✅ *Druckfertiges PDF* **und Stapeldruck** (ganze Klasse – ein Blattsatz je Kind in einem Rutsch).
 
 **Differenzierung**
 9. ✅ *Wortpool pro Kind* (individuelle Lernwörter) – Klassen-Grundwortschatz-Mix ⬜ geplant.
 10. 🟡 *Lernstand-Tag pro Kind* vorhanden (steuert KI-Schwierigkeit); ⬜ automatische Wortzahl/Komplexität daraus.
-11. ⬜ *LRS-/Barrierearm-Preset* (serifenlos, größer, Zeilenabstand ≥1,5, ≤8 Wörter/Zeile) per Schalter.
+11. ✅ *LRS-/leicht-Schnellvorlage* (größere Lineatur, weniger Wörter, Silbenbögen + Merkstellen vorgedruckt) per Klick; ⬜ serifenlose Schrift noch offen.
 
 **Fortschritt verfolgen (CRM-Kern)**
 12. ✅ *Digitale Lernwörter-Kartei pro Kind* mit Status `neu/wird geübt/sitzt`.
@@ -49,11 +49,11 @@ Legende: ✅ bereits in Schreibzeit · 🟡 teilweise · ⬜ geplant/Idee
 15. ⬜ *Fortschritt über Zeit* je Kind und je Rechtschreib-Phänomen (Auswertung).
 
 **Elternkommunikation**
-16. ⬜ *Übungspaket für zu Hause*: Wochen-Lernwörter als Blatt + optional Audio-Diktat (TTS).
+16. 🟡 *Übungspaket für zu Hause*: **Wort vorlesen (TTS)** vorhanden; ⬜ fertiges Wochen-Paket + Audio-Diktat noch offen.
 17. ⬜ *Kurzer Eltern-Status* („8/10 geübt") – ohne Eltern-Cloud-Konto.
 
 **Berichte**
-18. ⬜ *Lernentwicklungs-Export* je Kind für LEG/Zeugnisse (druckbare Übersicht).
+18. ✅ *Lernstands-Übersicht* je Kind (druckbar) für LEG/Zeugnisse – Status-Zählung + Wortlisten nach Status.
 
 **Ablauf & Organisation**
 19. 🟡 *Eine Stelle für alles* (Klassen, Kinder, Wörter, Texte) – Grundgerüst da; ⬜ Beobachtungs-/Notizfunktion.
