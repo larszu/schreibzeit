@@ -1,186 +1,248 @@
-# Schreibzeit
+<h1 align="center">✏️ Schreibzeit</h1>
 
-**Lernwörter-Kartei, Knickblätter & KI-Übungstexte für Grundschullehrkräfte.**
+<p align="center">
+  Lernwörter-Kartei, Knickblätter &amp; KI-Übungstexte für Grundschullehrkräfte
+</p>
 
-Schreibzeit hilft dabei, pro Kind eine individuelle **Lernwörter-Kartei** zu führen und daraus per Klick **druckfertige Knickblätter** („Lernwörterknicki"), **Wortkarten** und **passende Übungstexte** zu erzeugen. Die App ist **local-first**: Alle Daten bleiben auf dem Gerät, sie funktioniert **offline** und ist **ohne Adminrechte** nutzbar.
+<p align="center">
+  <img src="https://img.shields.io/badge/platform-Web%20%7C%20macOS%20%7C%20Windows-blue" />
+  <img src="https://img.shields.io/badge/offline-ready-success" />
+  <img src="https://img.shields.io/badge/PWA-installierbar-5a0fc8" />
+  <img src="https://img.shields.io/badge/built%20with-React%20%2B%20Electron-9cf" />
+  <img src="https://img.shields.io/badge/typescript-strongly%20typed-blue" />
+  <img src="https://img.shields.io/badge/DSGVO-local--first-success" />
+  <img src="https://img.shields.io/badge/license-MIT-lightgrey" />
+</p>
 
-> **Datenschutz zuerst.** Es werden Kinderdaten verarbeitet. Standardmäßig bleiben **alle Daten ausschließlich lokal** (im Browser), es gibt **keine Telemetrie** und **kein Tracking**. Der **einzige** externe Aufruf ist die von der Lehrkraft ausdrücklich ausgelöste KI-Textfunktion (Google Gemini).
+<p align="center">
+  Pro Kind eine Lernwörter-Kartei führen und daraus per Klick druckfertige Knickblätter,
+  Wortkarten und passende Übungstexte erzeugen – komplett offline und ohne Adminrechte.
+</p>
 
----
-
-## Inhalt
-
-- [Funktionen](#funktionen)
-- [Nutzung ohne Adminrechte](#nutzung-ohne-adminrechte)
-- [Das Knickblatt erklärt](#das-knickblatt-erklärt)
-- [FRESCH-Strategien](#fresch-strategien)
-- [KI-Übungstexte (Gemini) einrichten](#ki-übungstexte-gemini-einrichten)
-- [Datenschutz / DSGVO](#datenschutz--dsgvo)
-- [Backup & Datenumzug](#backup--datenumzug)
-- [Entwicklung & Build](#entwicklung--build)
-- [Technik](#technik)
-- [Lizenz](#lizenz)
-
----
-
-## Funktionen
-
-- **Kinder- & Klassenverwaltung** – Klassen anlegen, Kinder zuordnen, Lernstand (Klasse 1–4, Förderbedarf, LRS) erfassen. Durchsuchbare Sidebar, schnelles Umschalten.
-- **Lernwörter-Kartei pro Kind** – Wort, Artikel, Wortart, **Silbentrennung**, **Merkstellen** (schwierige Stellen), Status (`neu` · `wird geübt` · `sitzt`), Quelle/Textbezug, Notiz. Hinzufügen, bearbeiten, löschen, duplizieren, Massenaktionen.
-- **Wörter aus Text herauspicken** – Kindertext einfügen, Wörter anklicken; **Dublettenprüfung** gegen die vorhandene Kartei; automatische Silben-/Merkstellen-Vorschläge beim Übernehmen.
-- **Automatische Hilfen (immer editierbar)** – deutsche **Silbentrennung** (z. B. Som-mer, Zu-cker) und **Merkstellen-Vorschläge** (Doppelkonsonanten, ie, ck, tz, ß, Dehnungs-h, v, Umlaute, Diphthonge …). Trennstellen und Merkstellen lassen sich per Klick korrigieren.
-- **Knickblatt-Generator** – DIN **A4 quer**, Zeilen = Wörter (Anzahl einstellbar, Standard 10), Spalten = Strategien (Vorlage, Silben schwingen, schwierige Stellen markieren, auswendig schreiben mit Falzlinie, Partnerdiktat sowie FRESCH-Spalten Verlängern/Ableiten/Merkwort). Echte **Grundschul-Lineatur** (Klasse 1–4 / Haus-Lineatur), Differenzierungsoptionen, Live-Vorschau, Druck/PDF.
-- **Wortkarten** – Raster mehrerer Kärtchen pro A4-Seite zum Ausschneiden für den Karteikasten.
-- **KI-Übungstexte** – kurze Geschichte, Lückentext oder Quatschsätze mit den Lernwörtern des Kindes; lernstandsgerecht; Lückentext mit Lösungswörter-Liste. Texte bearbeiten, speichern und drucken.
-- **Backup** – Export/Import aller Daten als JSON (zusammenführen oder ersetzen), optional pro Kind.
-- **Responsiv & touchfreundlich** – für Desktop, Laptop, Tablet und Smartphone.
-- **PWA** – installierbar, offline nutzbar.
+<!-- HERO-BILD — siehe docs/screenshots/README.md für Aufnahme- & Anonymisierungs-Leitfaden -->
+<p align="center">
+  <img src="docs/screenshots/hero.png" alt="Schreibzeit — Lernwörter-Kartei und Knickblatt-Vorschau" width="860" />
+  <br />
+  <sub><i>Kind-Kartei links, Knickblatt-Generator mit Live-Vorschau rechts.</i></sub>
+</p>
 
 ---
 
-## Nutzung ohne Adminrechte
+## ✨ Überblick
 
-Es gibt zwei adminfreie Wege – ideal für Schul-PCs:
+**Schreibzeit** ist ein Werkzeug für Grundschullehrkräfte, um die individuellen **Lernwörter** jedes Kindes zu sammeln und daraus automatisch **Übungsmaterial** zu erstellen.
+Gebaut mit **React, TypeScript und Electron** – als reine Web-App (PWA) und als Desktop-App aus **einer gemeinsamen Codebasis**.
 
-### 1. Web / PWA (empfohlen)
+Entwickelt für den realen Schulalltag: schnell, ruhig, professionell – und **datenschutzfreundlich**, weil alle Daten lokal auf dem Gerät bleiben.
 
-Die App ist eine reine Web-App. Rufen Sie die gehostete Version im Browser auf (z. B. die per GitHub Pages bereitgestellte Seite) und installieren Sie sie optional über **„Installieren" / „Zum Startbildschirm hinzufügen"**. Danach läuft sie **offline**. Alle Daten liegen lokal im Browser.
-
-### 2. Windows-Portable (eine einzelne .exe)
-
-Laden Sie aus den [Releases](../../releases) die Datei **`Schreibzeit-Portable-x.y.z.exe`** herunter und starten Sie sie per Doppelklick – **keine Installation, keine Adminrechte** nötig.
-
-Für Verwaltungsgeräte stehen zusätzlich klassische Installer bereit: **Windows (NSIS-Setup)** und **macOS (`.dmg`)**.
-
-> **Hinweis zur KI-Funktion bei reiner Datei-Öffnung:** Wird die App als lose Datei über `file://` geöffnet, kann der Browser den Gemini-Aufruf wegen „null origin" (CORS) blockieren. **Kartei, Knickblatt, Wortkarten und Druck funktionieren dann trotzdem vollständig offline.** Die KI-Funktion arbeitet zuverlässig in der gehosteten/PWA-Web-Version und in der Desktop-App.
+✔ Vollständig offline nutzbar (Kartei, Knickblatt, Wortkarten, Druck)
+✔ Web/PWA **und** macOS &amp; Windows
+✔ **Ohne Adminrechte** (Web/PWA + Windows-Portable-.exe)
+✔ Local-first &amp; DSGVO-freundlich – kein Tracking, keine Telemetrie
 
 ---
 
-## Das Knickblatt erklärt
+## 📸 Screenshots
 
-Das **Knickblatt** („Lernwörterknicki") ist eine etablierte Übungsform:
-
-1. Das **Lernwort** steht links als gedruckte **Vorlage**.
-2. Das Kind übt es spaltenweise: **Silbenbögen schwingen** → **schwierige Stellen markieren**.
-3. Dann **knickt** es das Blatt an der gestrichelten **Falzlinie**, sodass die Vorlage verdeckt ist, und schreibt das Wort **auswendig**.
-4. Optional **diktiert ein Partnerkind** zur Kontrolle.
-
-Im Generator sind Spalten an-/abschaltbar und sortierbar, die Lineatur ist wählbar, und für schwächere Kinder lässt sich die Vorlage **mit vorgedruckten Silbenbögen** und/oder **markierten Merkstellen** ausgeben (Differenzierung).
-
----
-
-## FRESCH-Strategien
-
-Die Übungsspalten orientieren sich an den **FRESCH-Strategien** (Freiburger Rechtschreibschule):
-
-- **Schwingen** – das Wort in Silben sprechen/schwingen.
-- **Verlängern** – z. B. *Hund → Hunde*, um den Auslaut zu hören.
-- **Ableiten** – z. B. *Bäcker → backen*.
-- **Merkwörter** – Wörter, die man sich einprägen muss.
-
----
-
-## KI-Übungstexte (Gemini) einrichten
-
-1. Kostenlosen API-Schlüssel holen unter **<https://aistudio.google.com/apikey>** (ohne Kreditkarte).
-2. In Schreibzeit: **Einstellungen → KI-Textfunktion → API-Schlüssel** einfügen.
-3. Standardmodell ist **`gemini-2.5-flash`** (Free-Tier, grob ~10 Anfragen/Min, ~250/Tag – für eine Lehrkraft ausreichend). Der Modellname ist frei änderbar (z. B. für künftige Modelle wie `gemini-3-flash-preview`).
-
-Der Schlüssel wird **nur lokal** gespeichert. Übertragen werden ausschließlich die ausgewählten **Lernwörter** und die Aufgabenbeschreibung – **keine Kindernamen**.
-
-> Hinweis: `gemini-2.0-flash` wurde zum 01.06.2026 abgeschaltet und wird nicht verwendet.
-
-Fehlermeldungen sind verständlich auf Deutsch (kein Schlüssel, Limit erreicht, Netzwerkfehler, durch Sicherheitsfilter blockiert).
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/kartei.png" alt="Lernwörter-Kartei mit Status, Silbentrennung und Merkstellen" width="420" /><br />
+      <b>Lernwörter-Kartei</b>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/wort-editor.png" alt="Wort-Editor mit klickbarer Silben- und Merkstellen-Bearbeitung" width="420" /><br />
+      <b>Wort-Editor (Silben &amp; Merkstellen)</b>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/knickblatt.png" alt="Knickblatt-Generator A4 quer mit Falzlinie und Lineatur" width="420" /><br />
+      <b>Knickblatt-Generator</b>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/uebungstext.png" alt="KI-Übungstext und Lückentext mit Lösungswörtern" width="420" /><br />
+      <b>KI-Übungstexte &amp; Lückentext</b>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <img src="docs/screenshots/wortkarten.png" alt="Druckbare Wortkarten zum Ausschneiden" width="420" /><br />
+      <b>Wortkarten zum Ausschneiden</b>
+    </td>
+  </tr>
+</table>
 
 ---
 
-## Datenschutz / DSGVO
+## ✨ Hauptfunktionen
 
-- **Local-first:** Alle Daten (Kinder, Wörter, Texte, Einstellungen) liegen ausschließlich in der lokalen Datenbank (IndexedDB) des Geräts.
-- **Keine Telemetrie, kein Tracking, keine externen Aufrufe** – mit der **einzigen** Ausnahme des bewusst ausgelösten Gemini-Aufrufs.
-- **Initialen statt Klarnamen:** In den Einstellungen aktivierbar; in der Oberfläche und auf Ausdrucken erscheinen dann nur Initialen.
-- **„Alle Daten löschen"** entfernt sämtliche Daten unwiderruflich vom Gerät.
-
----
-
-## Backup & Datenumzug
-
-Da es keinen Server gibt, erfolgt die Sicherung über **Einstellungen → Datensicherung**:
-
-- **Backup exportieren** – schreibt alle Daten in eine JSON-Datei.
-- **Import (zusammenführen)** – fügt Daten hinzu/aktualisiert sie anhand der IDs.
-- **Import (ersetzen)** – ersetzt alle vorhandenen Daten (mit Sicherheitsabfrage).
-
-So lassen sich Daten sichern oder zwischen mehreren Schul-PCs umziehen.
+### 🗂️ Lernwörter-Kartei pro Kind
+- Klassen &amp; Kinder verwalten, Lernstand (Klasse 1–4, Förderbedarf, LRS)
+- Pro Wort: Artikel, Wortart, **Silbentrennung**, **Merkstellen**, Status, Quelle, Notiz
+- Status `neu` · `wird geübt` · `sitzt` mit Filter &amp; Sortierung
+- Hinzufügen, bearbeiten, löschen, duplizieren, Massenaktionen
+- Durchsuchbare Sidebar, schnelles Umschalten zwischen Kindern
 
 ---
 
-## Entwicklung & Build
+### 🔎 Wörter aus Text herauspicken
+- Kindertext einfügen → Wörter anklicken → in die Kartei übernehmen
+- **Dublettenprüfung** gegen die vorhandene Kartei (bereits vorhandene Wörter markiert)
+- Automatischer Silben- &amp; Merkstellen-Vorschlag beim Übernehmen
 
-Voraussetzung: **Node.js 20+**.
+---
+
+### ✏️ Automatische Hilfen (immer editierbar)
+- Deutsche **Silbentrennung** (z. B. *Som-mer*, *Zu-cker*, Digraphe bleiben zusammen)
+- **Merkstellen-Vorschlag**: Doppelkonsonanten, *ie/ck/tz/ß*, Dehnungs-h, *v*, Umlaute, Diphthonge
+- Trennstellen &amp; Merkstellen per Klick korrigieren
+
+---
+
+### 📄 Knickblatt-Generator (Herzstück)
+- DIN **A4 quer**, Zeilen = Lernwörter (Anzahl einstellbar, Standard 10)
+- Spalten = Übungsstrategien, an-/abschaltbar &amp; sortierbar:
+  - **Lernwort (Vorlage)** · **Silben schwingen** · **Stellen markieren** · **Auswendig schreiben** (mit gestrichelter **Falzlinie**) · **Partner diktiert**
+- FRESCH-Presets: **Verlängern**, **Ableiten**, **Merkwort**
+- Echte **Grundschul-Lineatur** (Klasse 1–4 / Haus-Lineatur mit Mittelband), mm-genau
+- **Differenzierung**: Vorlage mit vorgedruckten Silbenbögen und/oder Merkstellen
+- Wortauswahl per Filter (Status, neueste, Zufall) · **Live-Vorschau** · Druck/PDF
+
+---
+
+### 🃏 Wortkarten
+- Raster mehrerer Kärtchen pro A4-Seite zum Ausschneiden für den Karteikasten
+- Mit Artikel und markierten Merkstellen, Spaltenzahl einstellbar
+
+---
+
+### 🤖 KI-Übungstexte (Google Gemini)
+- Kurze Geschichte, **Lückentext** oder Quatschsätze mit den Lernwörtern des Kindes
+- Lernstandsgerecht (Klasse 1–4 / Förderbedarf / LRS), Thema optional
+- Lückentext mit automatischer **Lösungswörter-Liste**
+- Texte bearbeiten, am Kind speichern und drucken
+- Verständliche deutsche Fehlermeldungen (kein Schlüssel, Limit, Netzwerk, Safety-Filter)
+
+---
+
+### 💾 Backup &amp; Datenportabilität
+- Export aller Daten als **JSON** (Backup, Umzug zwischen Schul-PCs)
+- Import mit **Zusammenführen** oder **Ersetzen** (mit Sicherheitsabfrage)
+- Optional Export einzelner Kinder
+
+---
+
+## 🔐 Datenschutz (DSGVO)
+- **Local-first:** alle Daten ausschließlich lokal (IndexedDB) auf dem Gerät
+- **Keine Telemetrie, kein Tracking, keine externen Aufrufe** – einzige Ausnahme: der bewusst ausgelöste Gemini-Aufruf
+- Option **„nur Initialen/Spitznamen statt Klarnamen"**
+- **„Alle Daten löschen"** entfernt sämtliche Daten unwiderruflich
+
+---
+
+## 🛠️ Tech-Stack
+
+| Ebene | Technologie |
+| ----- | ----------- |
+| Desktop-Shell | **Electron** + electron-builder (dmg · nsis · **portable**) |
+| UI | **React 18** + **TypeScript** |
+| Styling | **Tailwind CSS** (token-basiertes, papierhaftes Theme) |
+| State | **Zustand** + reaktive **Dexie** Live-Queries |
+| Persistenz | **IndexedDB** via Dexie.js (austauschbare Repository-Abstraktion) |
+| PWA | Service Worker + Manifest (offline, installierbar) |
+| Druck/PDF | dediziertes Print-CSS (A4 quer, mm-Lineatur, Falzlinie) → Browser-Druck |
+| KI | **Google Gemini** über `fetch` (`x-goog-api-key`) |
+| Build | **Vite** · Tests mit **Vitest** |
+
+Die App ist **offline-first**: jedes Projekt liegt lokal, der gesamte State bleibt auf dem Gerät, und die KI-Integration ist **opt-in**.
+
+---
+
+## 🚀 Erste Schritte
+
+**Voraussetzung:** [Node.js](https://nodejs.org/) 20+ und npm.
 
 ```bash
-npm install        # Abhängigkeiten installieren
-npm run dev        # Entwicklungsserver (Vite)
-npm test           # Tests (Vitest)
-npm run lint       # ESLint
-npm run build      # Web/PWA-Produktionsbuild nach dist/
+# 1. Abhängigkeiten installieren
+npm install
 
-# Desktop (Electron)
-npm run electron:dev   # App im Electron-Fenster (Dev)
-npm run build:win      # Windows: NSIS-Installer + Portable-.exe
-npm run build:mac      # macOS: .dmg
-npm run build:linux    # Linux: AppImage
+# 2. Entwicklungsserver (Web, Hot-Reload → localhost:5173)
+npm run dev
+
+# 3. Typecheck, Lint & Tests
+npm run lint
+npm test
+
+# 4. Produktionsbuild (Web/PWA → dist/)
+npm run build
+
+# 5. Desktop bauen
+npm run electron:dev    # App im Electron-Fenster (Dev)
+npm run build:win       # Windows: NSIS-Installer + Portable-.exe
+npm run build:mac       # macOS: .dmg
 ```
 
-Die Desktop-Builds laden dieselbe gebaute Web-App (`dist/`) – **eine gemeinsame Codebasis** für Web und Desktop.
+> **Ohne Adminrechte an Schul-PCs:** entweder die gehostete **Web/PWA**-Version
+> (über „Installieren" zum Startbildschirm) oder die **Windows-Portable-.exe**
+> aus den [Releases](../../releases) – einfach doppelklicken, keine Installation.
 
-### Releases (GitHub Actions)
-
-Bei einem Tag `vX.Y.Z` baut der Workflow automatisch den Web-Build sowie die macOS- und Windows-Artefakte (inkl. Portable-.exe) und hängt sie an das GitHub-Release. Zusätzlich wird der Web-Build als Artefakt bereitgestellt (für GitHub Pages geeignet).
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
+> **CORS-Hinweis:** Aus einer als reine Datei (`file://`) geöffneten Seite kann
+> der Browser den Gemini-Aufruf wegen „null origin" blockieren. Kartei,
+> Knickblatt, Wortkarten und Druck laufen dann trotzdem vollständig offline.
+> Die KI-Funktion arbeitet zuverlässig in der Web/PWA- und der Desktop-Version.
 
 ---
 
-## Technik
+## 🤖 Gemini-Schlüssel einrichten
 
-- **Frontend:** React + TypeScript + Vite
-- **Styling:** Tailwind CSS (responsiv, papierhafte Farbwelt)
-- **Persistenz:** IndexedDB via Dexie.js (über eine austauschbare `Repository`-Abstraktion – ein späterer Cloud-Sync-Adapter ist andockbar)
-- **PWA:** Service Worker + Manifest (offline, installierbar)
-- **Druck/PDF:** dediziertes Print-CSS für exakt A4 quer, Lineatur in mm, Falzlinie; Ausgabe per Browser-Druck (→ PDF)
-- **Desktop:** Electron + electron-builder (mac `dmg`, win `nsis` **und** `portable`)
-- **KI:** Google Gemini über `fetch` (Header `x-goog-api-key`)
-- **Tests:** Vitest (Silbentrennung, Merkstellen, Tokenizer, Knickblatt-Modell, Backup, Gemini-Prompt/Lückentext, Repository, UI-Smoke)
+1. Kostenlosen API-Schlüssel holen: <https://aistudio.google.com/apikey> (ohne Kreditkarte)
+2. In Schreibzeit: **Einstellungen → KI-Textfunktion → API-Schlüssel** einfügen
+3. Standardmodell **`gemini-2.5-flash`** (Free-Tier); Modellname frei änderbar
 
-### Architektur & Erweiterbarkeit
-
-Der Code ist modular und datengetrieben aufgebaut, damit Erweiterungen ohne Umbau der Kernlogik möglich sind:
-
-- **Generatoren** (Knickblatt, Wortkarten, KI-Text) sind getrennt; neue Blatt-/Diktatformen (Spaltendiktat, Dosendiktat, Laufdiktat) lassen sich als weitere Generatoren ergänzen.
-- **Spalten** des Knickblatts sind über `SPALTEN_DEFS` definiert – neue Spaltentypen kommen rein datengetrieben hinzu.
-- **Persistenz** liegt hinter der `Repository`-Schnittstelle (Cloud-Sync später andockbar).
-- **i18n** ist vorbereitet (`src/i18n/`), Auslieferung aktuell nur Deutsch.
-
-```
-src/
-  core/        Reine Logik: Silbentrennung, Merkstellen, Tokenizer, Knickblatt-Modell
-  db/          Dexie-Schema + Repository-Abstraktion
-  services/    Backup (Export/Import), Gemini-Anbindung
-  state/       UI-State (Zustand) + reaktive Dexie-Hooks
-  components/  UI-Bausteine inkl. Druckkomponenten (print/)
-  views/       Kartei, Knickblatt, Übungstext, Wortkarten, Einstellungen
-  i18n/        Deutsche UI-Texte (i18n-fähig)
-electron/      Electron-Hauptprozess & Preload
-tests/         Vitest-Tests
-```
+Der Schlüssel wird nur lokal gespeichert. Übertragen werden ausschließlich die ausgewählten **Lernwörter** und die Aufgabenbeschreibung – **keine Kindernamen**.
 
 ---
 
-## Lizenz
+## 📚 Dokumentation
+
+- [`README` Build &amp; Architektur](#-tech-stack) — Tech-Stack &amp; Build-Skripte oben
+- [`docs/screenshots/README.md`](docs/screenshots/README.md) — Leitfaden zum Aufnehmen &amp; Anonymisieren der Screenshots
+- Quellstruktur: `src/core` (Logik) · `src/db` (Persistenz) · `src/services` (Backup, Gemini) · `src/views` (Oberfläche) · `electron/` (Desktop)
+
+---
+
+## 🧩 Erweiterbar gebaut
+
+Modular &amp; datengetrieben, damit Erweiterungen ohne Umbau der Kernlogik möglich sind:
+
+- Weitere **Blatt-/Diktatformen** (Spaltendiktat, Dosendiktat, Laufdiktat) als zusätzliche Generatoren
+- Neue **Knickblatt-Spalten** rein datengetrieben über `SPALTEN_DEFS`
+- **Cloud-Sync** später über die `Repository`-Abstraktion andockbar
+- **i18n** vorbereitet (Auslieferung aktuell Deutsch)
+
+---
+
+## 👤 Autor
+
+Entwickelt und gepflegt von **Lars Zumpe**
+
+---
+
+## ❤️ Unterstützen / Spenden
+
+Wenn dir Schreibzeit Vorbereitungszeit spart, freue ich mich über einen Kaffee:
+
+<p>
+  <a href="https://paypal.me/larszumpe">
+    <img src="https://img.shields.io/badge/PayPal-larszumpe-00457C?logo=paypal&logoColor=white" alt="Spenden via PayPal" />
+  </a>
+</p>
+
+Spenden sind völlig optional — die App bleibt so oder so MIT-lizenziert und kostenlos. 🙌
+
+---
+
+## 📄 Lizenz
 
 [MIT](./LICENSE)
