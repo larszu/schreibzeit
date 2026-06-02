@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, StatusBadge, EmptyState } from '@/components/ui';
 import {
   IconPlus,
@@ -10,16 +10,25 @@ import {
 } from '@/components/icons';
 import { repository } from '@/db/repository';
 import { useLernwoerter } from '@/state/hooks';
-import { splitSyllables, syllablesFromBreakpoints, breakpointsFromSyllables } from '@/core/syllables';
+import { syllablesFromBreakpoints, breakpointsFromSyllables } from '@/core/syllables';
 import { suggestMerkstellen } from '@/core/merkstellen';
 import { tokenize, buildExistingSet, normalizeForCompare } from '@/core/tokenize';
 import { formatSyllables } from '@/core/syllables';
+import { lookupWort, woerterbuchSilben } from '@/services/dictionary';
+import { erkenneTextAusFoto } from '@/services/ocr';
+import { IconCamera } from '@/components/icons';
 import { t } from '@/i18n/de';
-import type { Kind, Lernwort, WortStatus } from '@/types';
+import type { Einstellungen, Kind, Lernwort, WortStatus } from '@/types';
 
 const STATUS_REIHENFOLGE: WortStatus[] = ['neu', 'wird_geuebt', 'sitzt'];
 
-export function KarteiView({ kind }: { kind: Kind }) {
+export function KarteiView({
+  kind,
+  einstellungen,
+}: {
+  kind: Kind;
+  einstellungen: Einstellungen;
+}) {
   const woerter = useLernwoerter(kind.id);
   const [filter, setFilter] = useState<WortStatus | 'alle'>('alle');
   const [editor, setEditor] = useState<{ offen: boolean; wort?: Lernwort }>({ offen: false });
@@ -51,7 +60,7 @@ export function KarteiView({ kind }: { kind: Kind }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-4xl space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <button className="btn-primary" onClick={() => setEditor({ offen: true })}>
           <IconPlus width={18} height={18} /> Wort hinzufügen
@@ -123,6 +132,7 @@ export function KarteiView({ kind }: { kind: Kind }) {
       <TextExtraktor
         offen={extraktorOffen}
         kind={kind}
+        einstellungen={einstellungen}
         vorhandene={woerter}
         onClose={() => setExtraktorOffen(false)}
       />
@@ -246,12 +256,15 @@ function LernwortEditor({
     setNotiz(w?.notiz ?? '');
   }, [state.offen, vorhanden]);
 
-  // Beim Tippen eines neuen Wortes automatisch Vorschläge erzeugen.
+  // Beim Tippen eines neuen Wortes automatisch Vorschläge aus dem Wörterbuch
+  // erzeugen (korrekte Silbentrennung; Artikel, falls bekannt).
   function onWortChange(v: string) {
     setWort(v);
     if (!vorhanden) {
-      setBreaks(breakpointsFromSyllables(splitSyllables(v)));
-      setMerkstellen(suggestMerkstellen(v));
+      const info = lookupWort(v);
+      setBreaks(breakpointsFromSyllables(info.silben));
+      setMerkstellen(info.merkstellen);
+      if (info.artikelGefunden && info.artikel) setArtikel(info.artikel);
     }
   }
 
@@ -344,7 +357,7 @@ function LernwortEditor({
             <span className="label mb-0">Silbentrennung (Vorschlag – bitte prüfen)</span>
             <button
               className="text-xs text-brand-600 hover:underline"
-              onClick={() => setBreaks(breakpointsFromSyllables(splitSyllables(wort)))}
+              onClick={() => setBreaks(breakpointsFromSyllables(woerterbuchSilben(wort)))}
             >
               Vorschlag neu
             </button>
@@ -498,21 +511,27 @@ function ClickbareBuchstaben({
 function TextExtraktor({
   offen,
   kind,
+  einstellungen,
   vorhandene,
   onClose,
 }: {
   offen: boolean;
   kind: Kind;
+  einstellungen: Einstellungen;
   vorhandene: Lernwort[];
   onClose: () => void;
 }) {
   const [text, setText] = useState('');
   const [hinzugefuegt, setHinzugefuegt] = useState<Set<string>>(new Set());
+  const [ocrLaden, setOcrLaden] = useState(false);
+  const [ocrInfo, setOcrInfo] = useState<string | null>(null);
+  const fotoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (offen) {
       setText('');
       setHinzugefuegt(new Set());
+      setOcrInfo(null);
     }
   }, [offen]);
 
@@ -523,20 +542,63 @@ function TextExtraktor({
   );
 
   async function uebernehmen(token: { wort: string; key: string }) {
-    await repository.addLernwort(kind.id, token.wort, { quelle: 'Text-Extraktion' });
+    const info = lookupWort(token.wort);
+    await repository.addLernwort(kind.id, token.wort, {
+      quelle: 'Text-Extraktion',
+      silben: info.silben,
+      merkstellen: info.merkstellen,
+      artikel: info.artikel || '',
+    });
     setHinzugefuegt((alt) => new Set(alt).add(normalizeForCompare(token.wort)));
+  }
+
+  async function fotoGewaehlt(file: File) {
+    setOcrLaden(true);
+    setOcrInfo(null);
+    try {
+      const { text: erkannt, engine } = await erkenneTextAusFoto(file, einstellungen);
+      setText((alt) => (alt.trim() ? `${alt}\n${erkannt}` : erkannt));
+      setOcrInfo(`Text erkannt mit ${engine === 'claude' ? 'Claude Vision' : 'Gemini'}.`);
+    } catch (e) {
+      setOcrInfo(e instanceof Error ? e.message : 'Texterkennung fehlgeschlagen.');
+    } finally {
+      setOcrLaden(false);
+    }
   }
 
   return (
     <Modal offen={offen} titel="Wörter aus Text herauspicken" onClose={onClose} weit>
       <div className="space-y-3">
         <p className="text-sm text-ink-soft">
-          Fügen Sie den (abgetippten) Text des Kindes ein und klicken Sie die Lernwörter an. Bereits
-          vorhandene Wörter sind markiert.
+          Fügen Sie den (abgetippten) Text des Kindes ein oder laden Sie ein Foto hoch – klicken Sie
+          dann die Lernwörter an. Bereits vorhandene Wörter sind markiert.
         </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={fotoRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void fotoGewaehlt(f);
+              e.target.value = '';
+            }}
+          />
+          <button
+            className="btn-secondary"
+            onClick={() => fotoRef.current?.click()}
+            disabled={ocrLaden}
+          >
+            <IconCamera width={18} height={18} />
+            {ocrLaden ? 'Text wird erkannt …' : 'Foto hochladen (Texterkennung)'}
+          </button>
+          {ocrInfo && <span className="text-xs text-ink-soft">{ocrInfo}</span>}
+        </div>
         <textarea
           className="input min-h-[120px] font-serif"
-          placeholder="Text hier einfügen …"
+          placeholder="Text hier einfügen oder per Foto erkennen lassen …"
           value={text}
           onChange={(e) => setText(e.target.value)}
           autoFocus

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { KarteiView } from './views/KarteiView';
 import { KnickblattView } from './views/KnickblattView';
@@ -7,7 +7,14 @@ import { WortkartenView } from './views/WortkartenView';
 import { EinstellungenModal } from './views/EinstellungenView';
 import { DatenschutzBanner } from './components/DatenschutzBanner';
 import { Modal } from './components/ui';
-import { IconBook, IconCards, IconFold, IconMenu, IconSparkles } from './components/icons';
+import {
+  IconBook,
+  IconCards,
+  IconFold,
+  IconMenu,
+  IconPanelLeft,
+  IconSparkles,
+} from './components/icons';
 import { useEinstellungen, useKinder, useKlassen } from './state/hooks';
 import { displayName, useUiStore, type TabId } from './state/store';
 import { repository } from './db/repository';
@@ -26,7 +33,36 @@ export default function App() {
   const einstellungen = useEinstellungen();
   const { selectedKindId, activeTab, setTab, setSelectedKind, einstellungenOffen, setEinstellungenOffen } =
     useUiStore();
-  const [sidebarOffen, setSidebarOffen] = useState(false);
+  const [sidebarOffen, setSidebarOffen] = useState(false); // Mobil-Drawer
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => localStorage.getItem('sz-sidebar-collapsed') === '1',
+  );
+  const [sidebarWidth, setSidebarWidth] = useState(
+    () => Number(localStorage.getItem('sz-sidebar-width')) || 288,
+  );
+  const resizing = useRef(false);
+
+  useEffect(() => {
+    localStorage.setItem('sz-sidebar-collapsed', sidebarCollapsed ? '1' : '0');
+  }, [sidebarCollapsed]);
+  useEffect(() => {
+    localStorage.setItem('sz-sidebar-width', String(sidebarWidth));
+  }, [sidebarWidth]);
+
+  function startResize(e: React.PointerEvent) {
+    e.preventDefault();
+    resizing.current = true;
+    const onMove = (ev: PointerEvent) => {
+      if (resizing.current) setSidebarWidth(Math.min(520, Math.max(240, ev.clientX)));
+    };
+    const onUp = () => {
+      resizing.current = false;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
 
   // Sicherstellen, dass Einstellungen initialisiert sind.
   useEffect(() => {
@@ -52,23 +88,37 @@ export default function App() {
           }`}
           onClick={() => setSidebarOffen(false)}
         />
-        <div
-          className={`fixed inset-y-0 left-0 z-40 w-72 transform transition-transform lg:static lg:translate-x-0 ${
-            sidebarOffen ? 'translate-x-0' : '-translate-x-full'
-          }`}
-        >
-          <Sidebar
-            kinder={kinder}
-            klassen={klassen}
-            einstellungen={einstellungen}
-            selectedKindId={selectedKindId}
-            onSelect={(id) => {
-              setSelectedKind(id);
-              setSidebarOffen(false);
-            }}
-            onOpenSettings={() => setEinstellungenOffen(true)}
-          />
-        </div>
+        {(sidebarOffen || !sidebarCollapsed) && (
+          <div
+            className={`fixed inset-y-0 left-0 z-40 max-w-[85vw] transform transition-transform lg:static lg:translate-x-0 ${
+              sidebarOffen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+            }`}
+            style={{ width: sidebarWidth }}
+          >
+            <div className="relative h-full">
+              <Sidebar
+                kinder={kinder}
+                klassen={klassen}
+                einstellungen={einstellungen}
+                selectedKindId={selectedKindId}
+                onSelect={(id) => {
+                  setSelectedKind(id);
+                  setSidebarOffen(false);
+                }}
+                onOpenSettings={() => setEinstellungenOffen(true)}
+                onCollapse={() => setSidebarCollapsed(true)}
+              />
+              {/* Breite ziehen (nur Desktop) */}
+              <div
+                onPointerDown={startResize}
+                className="absolute right-0 top-0 hidden h-full w-1.5 cursor-col-resize bg-transparent hover:bg-brand-300/50 lg:block"
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Seitenleiste breiter/schmaler ziehen"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Hauptbereich */}
         <main className="flex min-w-0 flex-1 flex-col bg-paper-100">
@@ -79,6 +129,14 @@ export default function App() {
               aria-label="Menü öffnen"
             >
               <IconMenu />
+            </button>
+            <button
+              className="btn-ghost hidden p-2 lg:inline-flex"
+              onClick={() => setSidebarCollapsed((c) => !c)}
+              aria-label={sidebarCollapsed ? 'Seitenleiste einblenden' : 'Seitenleiste ausblenden'}
+              title={sidebarCollapsed ? 'Seitenleiste einblenden' : 'Seitenleiste ausblenden'}
+            >
+              <IconPanelLeft />
             </button>
             {kind ? (
               <div className="min-w-0">
@@ -126,8 +184,8 @@ export default function App() {
                 <Willkommen onOpenSidebar={() => setSidebarOffen(true)} />
               </div>
             ) : (
-              <div className="mx-auto max-w-6xl px-4 py-5">
-                {activeTab === 'kartei' && <KarteiView kind={kind} />}
+              <div className="mx-auto w-full max-w-[1400px] px-4 py-5 xl:mx-0">
+                {activeTab === 'kartei' && <KarteiView kind={kind} einstellungen={einstellungen} />}
                 {activeTab === 'knickblatt' && (
                   <KnickblattView kind={kind} einstellungen={einstellungen} klassen={klassen} />
                 )}

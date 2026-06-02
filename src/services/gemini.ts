@@ -178,6 +178,64 @@ export function makeLueckentext(
   return { text: result, loesungswoerter };
 }
 
+/** Erkennt Text auf einem Bild mit Gemini (multimodal). */
+export async function geminiOcr(
+  base64: string,
+  mimeType: string,
+  settings: { apiKey: string; modell: string },
+): Promise<string> {
+  if (!settings.apiKey.trim()) {
+    throw new GeminiError(
+      'Es ist kein Gemini-API-Schlüssel hinterlegt. Bitte in den Einstellungen eintragen.',
+      'kein_key',
+    );
+  }
+  const modell = settings.modell.trim() || 'gemini-2.5-flash';
+  const url = `${GEMINI_BASE}/${encodeURIComponent(modell)}:generateContent`;
+  const prompt =
+    'Transkribiere den handgeschriebenen oder abgedruckten deutschen Text auf diesem Bild so genau wie möglich. ' +
+    'Gib ausschließlich den reinen Text zurück – ohne Kommentare, ohne Anführungszeichen. Behalte Zeilenumbrüche bei.';
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': settings.apiKey.trim() },
+      body: JSON.stringify({
+        contents: [
+          { parts: [{ inline_data: { mime_type: mimeType, data: base64 } }, { text: prompt }] },
+        ],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 2048 },
+      }),
+    });
+  } catch {
+    throw new GeminiError(
+      'Keine Verbindung zur KI. Bitte Internetverbindung prüfen (in der Web-/Desktop-Version verfügbar).',
+      'netzwerk',
+    );
+  }
+
+  if (response.status === 401 || response.status === 403) {
+    throw new GeminiError('Der API-Schlüssel wurde abgelehnt. Bitte prüfen.', 'auth');
+  }
+  if (response.status === 429) {
+    throw new GeminiError('Die KI ist gerade ausgelastet. Bitte kurz warten.', 'rate_limit');
+  }
+  if (!response.ok) {
+    throw new GeminiError(`Die KI hat einen Fehler gemeldet (Code ${response.status}).`, 'unbekannt');
+  }
+
+  const data = await response.json();
+  const text: string | undefined = data?.candidates?.[0]?.content?.parts
+    ?.map((p: { text?: string }) => p.text ?? '')
+    .join('')
+    .trim();
+  if (!text) {
+    throw new GeminiError('Es wurde kein Text erkannt. Bitte erneut versuchen.', 'leer');
+  }
+  return text;
+}
+
 /** Komplettablauf: Text generieren und ggf. in Lückentext umwandeln. */
 export async function generateUebungstext(
   opts: GenerateOptions,

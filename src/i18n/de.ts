@@ -54,7 +54,7 @@ export const de = {
   },
   datenschutz: {
     titel: 'Datenschutz',
-    text: 'Alle Daten bleiben ausschließlich lokal auf diesem Gerät (im Browser). Es gibt keine Telemetrie und kein Tracking. Der einzige externe Aufruf ist die von Ihnen ausgelöste KI-Textfunktion (Google Gemini).',
+    text: 'Alle Daten bleiben ausschließlich lokal auf diesem Gerät (im Browser). Es gibt keine Telemetrie und kein Tracking. Die einzigen externen Aufrufe sind die von Ihnen ausgelösten KI-Funktionen: Übungstexte (Google Gemini) und – falls genutzt – die Foto-Texterkennung (Gemini bzw. optional Claude Vision).',
     verstanden: 'Verstanden',
     hinweisInitialen: 'Tipp: In den Einstellungen können Sie „nur Initialen statt Klarnamen" aktivieren.',
   },

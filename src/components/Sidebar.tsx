@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { IconPlus, IconSearch, IconSettings, IconUsers, IconEdit, IconTrash } from './icons';
+import {
+  IconPlus,
+  IconSearch,
+  IconSettings,
+  IconUsers,
+  IconEdit,
+  IconTrash,
+  IconPanelLeft,
+} from './icons';
 import { Modal } from './ui';
 import { repository } from '@/db/repository';
 import { displayName } from '@/state/store';
@@ -15,6 +23,7 @@ export function Sidebar({
   selectedKindId,
   onSelect,
   onOpenSettings,
+  onCollapse,
 }: {
   kinder: Kind[];
   klassen: Klasse[];
@@ -22,6 +31,7 @@ export function Sidebar({
   selectedKindId?: string;
   onSelect: (id: string) => void;
   onOpenSettings: () => void;
+  onCollapse?: () => void;
 }) {
   const [suche, setSuche] = useState('');
   const [kindModal, setKindModal] = useState<{ offen: boolean; kind?: Kind }>({ offen: false });
@@ -39,10 +49,22 @@ export function Sidebar({
         <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-500 font-serif text-lg font-bold text-white">
           S
         </span>
-        <div>
-          <p className="font-serif text-lg font-semibold leading-tight text-ink">{t.app.name}</p>
-          <p className="text-xs text-ink-faint">{t.app.tagline}</p>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-serif text-lg font-semibold leading-tight text-ink">
+            {t.app.name}
+          </p>
+          <p className="truncate text-xs text-ink-faint">{t.app.tagline}</p>
         </div>
+        {onCollapse && (
+          <button
+            className="btn-ghost hidden p-1.5 lg:inline-flex"
+            onClick={onCollapse}
+            aria-label="Seitenleiste ausblenden"
+            title="Seitenleiste ausblenden"
+          >
+            <IconPanelLeft width={18} height={18} />
+          </button>
+        )}
       </div>
 
       <div className="px-3">

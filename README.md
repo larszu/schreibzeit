@@ -87,14 +87,16 @@ Entwickelt für den realen Schulalltag: schnell, ruhig, professionell – und **
 ---
 
 ### 🔎 Wörter aus Text herauspicken
-- Kindertext einfügen → Wörter anklicken → in die Kartei übernehmen
+- Kindertext einfügen **oder Foto hochladen** → Wörter anklicken → in die Kartei übernehmen
+- **Foto-Texterkennung (OCR):** Standard über Gemini, optional über **Claude Vision** (besonders gut bei Handschrift, in den Einstellungen aktivierbar)
 - **Dublettenprüfung** gegen die vorhandene Kartei (bereits vorhandene Wörter markiert)
-- Automatischer Silben- &amp; Merkstellen-Vorschlag beim Übernehmen
+- Automatischer Silben-, Artikel- &amp; Merkstellen-Vorschlag beim Übernehmen
 
 ---
 
 ### ✏️ Automatische Hilfen (immer editierbar)
-- Deutsche **Silbentrennung** (z. B. *Som-mer*, *Zu-cker*, Digraphe bleiben zusammen)
+- **Wörterbuch-Silbentrennung** (offline, deutsche Trennmuster) – z. B. *Ap-fel*, *Som-mer*, *Erd-bee-re*
+- **Artikel-Vorschlag** (der/die/das) aus einem Grundwortschatz-Datensatz beim Tippen
 - **Merkstellen-Vorschlag**: Doppelkonsonanten, *ie/ck/tz/ß*, Dehnungs-h, *v*, Umlaute, Diphthonge
 - Trennstellen &amp; Merkstellen per Klick korrigieren
 
@@ -105,6 +107,7 @@ Entwickelt für den realen Schulalltag: schnell, ruhig, professionell – und **
 - Spalten = Übungsstrategien, an-/abschaltbar &amp; sortierbar:
   - **Lernwort (Vorlage)** · **Silben schwingen** · **Stellen markieren** · **Auswendig schreiben** (mit gestrichelter **Falzlinie**) · **Partner diktiert**
 - FRESCH-Presets: **Verlängern**, **Ableiten**, **Merkwort**
+- **Eigene Spalten** hinzufügen, vorhandene **umbenennen, löschen** und sortieren
 - Echte **Grundschul-Lineatur** (Klasse 1–4 / Haus-Lineatur mit Mittelband), mm-genau
 - **Differenzierung**: Vorlage mit vorgedruckten Silbenbögen und/oder Merkstellen
 - Wortauswahl per Filter (Status, neueste, Zufall) · **Live-Vorschau** · Druck/PDF
@@ -152,7 +155,8 @@ Entwickelt für den realen Schulalltag: schnell, ruhig, professionell – und **
 | Persistenz | **IndexedDB** via Dexie.js (austauschbare Repository-Abstraktion) |
 | PWA | Service Worker + Manifest (offline, installierbar) |
 | Druck/PDF | dediziertes Print-CSS (A4 quer, mm-Lineatur, Falzlinie) → Browser-Druck |
-| KI | **Google Gemini** über `fetch` (`x-goog-api-key`) |
+| KI | **Google Gemini** (Text &amp; OCR) und optional **Claude Vision** (OCR) über `fetch` |
+| Wörterbuch | Offline-Silbentrennung über deutsche Trennmuster (`hyphen`) + kuratierte Artikel-Liste |
 | Build | **Vite** · Tests mit **Vitest** |
 
 Die App ist **offline-first**: jedes Projekt liegt lokal, der gesamte State bleibt auf dem Gerät, und die KI-Integration ist **opt-in**.
@@ -201,6 +205,8 @@ npm run build:mac       # macOS: .dmg
 3. Standardmodell **`gemini-2.5-flash`** (Free-Tier); Modellname frei änderbar
 
 Der Schlüssel wird nur lokal gespeichert. Übertragen werden ausschließlich die ausgewählten **Lernwörter** und die Aufgabenbeschreibung – **keine Kindernamen**.
+
+**Optional – bessere Foto-Texterkennung mit Claude Vision:** In den Einstellungen aktivierbar; benötigt einen Claude-Schlüssel von [console.anthropic.com](https://console.anthropic.com/settings/keys) (Standardmodell `claude-opus-4-8`, frei änderbar). Ohne Claude-Schlüssel wird die Foto-Texterkennung über Gemini ausgeführt. Foto-Uploads gehen nur beim Erkennen an die KI.
 
 ---
 

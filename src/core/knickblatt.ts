@@ -90,6 +90,14 @@ export const SPALTEN_DEFS: Record<SpaltenTyp, SpaltenDef> = {
     mitLineatur: true,
     istVorlage: false,
   },
+  benutzerdefiniert: {
+    typ: 'benutzerdefiniert',
+    titel: 'Eigene Spalte',
+    symbol: '✳️',
+    beschreibung: 'Selbst definierte Übungsspalte mit Schreiblinien.',
+    mitLineatur: true,
+    istVorlage: false,
+  },
 };
 
 export const DEFAULT_SPALTEN: SpaltenTyp[] = [
@@ -101,6 +109,7 @@ export const DEFAULT_SPALTEN: SpaltenTyp[] = [
 
 export function defaultKnickspalten(typen: SpaltenTyp[] = DEFAULT_SPALTEN): Knickspalte[] {
   return typen.map((typ) => ({
+    id: typ,
     typ,
     aktiv: true,
     // Vor der „Auswendig schreiben"-Spalte wird geknickt.
@@ -146,7 +155,11 @@ export function paginate(woerter: Lernwort[], woerterProBlatt: number): Knickbla
 export function activeSpalten(config: KnickblattConfig): Array<Knickspalte & SpaltenDef> {
   return config.spalten
     .filter((s) => s.aktiv)
-    .map((s) => ({ ...SPALTEN_DEFS[s.typ], ...s }));
+    .map((s) => {
+      const def = SPALTEN_DEFS[s.typ];
+      // Eigener Titel überschreibt den Standardtitel (falls gesetzt).
+      return { ...def, ...s, titel: s.titel?.trim() || def.titel };
+    });
 }
 
 // Lineatur-Maße in Millimetern (Grundschul-Schreiblinien mit Mittelband).

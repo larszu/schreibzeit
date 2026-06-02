@@ -1,5 +1,6 @@
 // Wiederverwendbare UI-Bausteine: Modal, Bestätigungsdialog, Badges.
 import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { IconClose } from './icons';
 
 export function Modal({
@@ -25,7 +26,9 @@ export function Modal({
   }, [offen, onClose]);
 
   if (!offen) return null;
-  return (
+  // Über ein Portal an <body> rendern, damit der Dialog nicht von
+  // transformierten Vorfahren (z. B. der Sidebar) beschnitten wird.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/40 p-4 sm:items-center"
       role="dialog"
@@ -46,7 +49,8 @@ export function Modal({
         </div>
         <div className="px-5 py-4">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

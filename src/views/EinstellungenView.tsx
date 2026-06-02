@@ -107,6 +107,70 @@ export function EinstellungenModal({
         </div>
       </section>
 
+      {/* Foto-Texterkennung */}
+      <section>
+        <h3 className="mb-2 font-serif font-semibold text-ink">Foto-Texterkennung</h3>
+        <p className="mb-2 text-sm text-ink-soft">
+          In „Aus Text herauspicken" können Sie ein Foto hochladen; der Text wird automatisch
+          erkannt. Standardmäßig wird dafür Gemini genutzt. Für deutlich bessere Ergebnisse
+          (besonders bei Handschrift) lässt sich optional <strong>Claude Vision</strong> aktivieren.
+        </p>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-brand-500"
+            checked={einstellungen.claudeVisionAktiv}
+            onChange={(e) => set('claudeVisionAktiv', e.target.checked)}
+          />
+          Claude Vision für die Texterkennung verwenden
+        </label>
+        {einstellungen.claudeVisionAktiv && (
+          <div className="mt-3 space-y-3">
+            <div>
+              <label className="label" htmlFor="set-claude-key">
+                Claude API-Schlüssel
+              </label>
+              <input
+                id="set-claude-key"
+                type="password"
+                className="input font-mono"
+                value={einstellungen.claudeApiKey}
+                placeholder="sk-ant-…"
+                onChange={(e) => set('claudeApiKey', e.target.value)}
+                autoComplete="off"
+              />
+              <p className="mt-1 text-xs text-ink-faint">
+                Schlüssel unter{' '}
+                <a
+                  className="text-brand-600 underline"
+                  href="https://console.anthropic.com/settings/keys"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  console.anthropic.com
+                </a>
+                . Bleibt nur lokal gespeichert. Foto-Uploads gehen nur beim Erkennen an Claude.
+              </p>
+            </div>
+            <div>
+              <label className="label" htmlFor="set-claude-modell">
+                Claude-Modell
+              </label>
+              <input
+                id="set-claude-modell"
+                className="input font-mono"
+                value={einstellungen.claudeModell}
+                onChange={(e) => set('claudeModell', e.target.value)}
+              />
+              <p className="mt-1 text-xs text-ink-faint">
+                Standard: <code>claude-opus-4-8</code>. Für günstigere/schnellere Erkennung z. B.{' '}
+                <code>claude-haiku-4-5</code>.
+              </p>
+            </div>
+          </div>
+        )}
+      </section>
+
       {/* Blattkopf & Standardwerte */}
       <section>
         <h3 className="mb-2 font-serif font-semibold text-ink">Blattkopf & Standardwerte</h3>

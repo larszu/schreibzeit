@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { EmptyState } from '@/components/ui';
 import { IconSparkles, IconPrint, IconTrash, IconCheck } from '@/components/icons';
 import { PrintPortal } from '@/components/print/PrintPortal';
@@ -34,11 +34,17 @@ export function UebungstextView({
   const [druckText, setDruckText] = useState<Uebungstext | null>(null);
 
   useEffect(() => {
-    setAuswahl(new Set(woerter.slice(0, 8).map((w) => w.id)));
     setErgebnis(null);
     setFehler(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind.id]);
+
+  const initialisiertFuer = useRef<string | null>(null);
+  useEffect(() => {
+    if (initialisiertFuer.current !== kind.id && woerter.length > 0) {
+      setAuswahl(new Set(woerter.slice(0, 8).map((w) => w.id)));
+      initialisiertFuer.current = kind.id;
+    }
+  }, [kind.id, woerter]);
 
   const gewaehlteWoerter = useMemo(
     () => woerter.filter((w) => auswahl.has(w.id)).map((w) => w.wort),

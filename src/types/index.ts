@@ -85,10 +85,15 @@ export type SpaltenTyp =
   | 'partner'
   | 'verlaengern'
   | 'ableiten'
-  | 'merkwort';
+  | 'merkwort'
+  | 'benutzerdefiniert';
 
 export interface Knickspalte {
+  /** Eindeutige ID (erlaubt mehrere eigene Spalten gleichen Typs). */
+  id: string;
   typ: SpaltenTyp;
+  /** Eigener Spaltentitel (überschreibt den Standardtitel). */
+  titel?: string;
   /** Gestrichelte Falzlinie unmittelbar vor dieser Spalte einzeichnen. */
   falzDavor?: boolean;
   aktiv: boolean;
@@ -110,6 +115,10 @@ export interface Einstellungen {
   id: 'app';
   geminiApiKey: string;
   geminiModell: string;
+  /** Optionale, bessere Foto-Texterkennung über Claude Vision. */
+  claudeVisionAktiv: boolean;
+  claudeApiKey: string;
+  claudeModell: string;
   lehrkraftName: string;
   schulName: string;
   standardLineatur: Lineatur;

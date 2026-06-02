@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { EmptyState } from '@/components/ui';
-import { IconPrint, IconCheck } from '@/components/icons';
+import { IconPrint, IconCheck, IconPlus, IconTrash } from '@/components/icons';
 import { PrintPortal } from '@/components/print/PrintPortal';
 import { useFitScale } from '@/components/print/useFitScale';
+import { newId } from '@/core/id';
 import {
   KnickblattDocument,
   type KnickblattKopf,
@@ -44,7 +45,7 @@ function vollstaendigeSpalten(standard: SpaltenTyp[]): Knickspalte[] {
   const result: Knickspalte[] = [...aktiveSet];
   for (const typ of ALLE_SPALTEN) {
     if (!result.some((s) => s.typ === typ)) {
-      result.push({ typ, aktiv: false, falzDavor: typ === 'auswendig' });
+      result.push({ id: typ, typ, aktiv: false, falzDavor: typ === 'auswendig' });
     }
   }
   return result;
@@ -71,11 +72,14 @@ export function KnickblattView({
   const [thema, setThema] = useState('');
   const [previewRef, scale] = useFitScale(PAGE_WIDTH_PX);
 
-  // Vorauswahl: beim ersten Laden alle Wörter aufnehmen.
+  // Vorauswahl: alle Wörter aufnehmen, sobald sie geladen sind (pro Kind einmal).
+  const initialisiertFuer = useRef<string | null>(null);
   useEffect(() => {
-    setAuswahl(new Set(woerter.map((w) => w.id)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kind.id]);
+    if (initialisiertFuer.current !== kind.id && woerter.length > 0) {
+      setAuswahl(new Set(woerter.map((w) => w.id)));
+      initialisiertFuer.current = kind.id;
+    }
+  }, [kind.id, woerter]);
 
   const ausgewaehlteWoerter = useMemo(
     () => woerter.filter((w) => auswahl.has(w.id)),
@@ -94,11 +98,23 @@ export function KnickblattView({
   function setSpalten(spalten: Knickspalte[]) {
     setConfig((c) => ({ ...c, spalten }));
   }
-  function toggleSpalte(typ: SpaltenTyp) {
-    setSpalten(config.spalten.map((s) => (s.typ === typ ? { ...s, aktiv: !s.aktiv } : s)));
+  function toggleSpalte(id: string) {
+    setSpalten(config.spalten.map((s) => (s.id === id ? { ...s, aktiv: !s.aktiv } : s)));
   }
-  function verschiebe(typ: SpaltenTyp, richtung: -1 | 1) {
-    const idx = config.spalten.findIndex((s) => s.typ === typ);
+  function renameSpalte(id: string, titel: string) {
+    setSpalten(config.spalten.map((s) => (s.id === id ? { ...s, titel } : s)));
+  }
+  function deleteSpalte(id: string) {
+    setSpalten(config.spalten.filter((s) => s.id !== id));
+  }
+  function addSpalte() {
+    setSpalten([
+      ...config.spalten,
+      { id: newId(), typ: 'benutzerdefiniert', titel: 'Neue Spalte', aktiv: true },
+    ]);
+  }
+  function verschiebe(id: string, richtung: -1 | 1) {
+    const idx = config.spalten.findIndex((s) => s.id === id);
     const ziel = idx + richtung;
     if (idx < 0 || ziel < 0 || ziel >= config.spalten.length) return;
     const neu = [...config.spalten];
@@ -230,22 +246,28 @@ export function KnickblattView({
               const def = SPALTEN_DEFS[s.typ];
               return (
                 <li
-                  key={s.typ}
-                  className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-paper-100"
+                  key={s.id}
+                  className="flex items-center gap-1.5 rounded-md px-1.5 py-1 hover:bg-paper-100"
                 >
                   <input
                     type="checkbox"
-                    className="h-4 w-4 accent-brand-500"
+                    className="h-4 w-4 shrink-0 accent-brand-500"
                     checked={s.aktiv}
                     disabled={s.typ === 'vorlage'}
-                    onChange={() => toggleSpalte(s.typ)}
-                    aria-label={`${def.titel} anzeigen`}
+                    onChange={() => toggleSpalte(s.id)}
+                    aria-label="Spalte anzeigen"
                   />
-                  <span className="text-base">{def.symbol}</span>
-                  <span className="flex-1 text-sm">{def.titel}</span>
+                  <span className="shrink-0 text-base">{def.symbol}</span>
+                  <input
+                    className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-sm hover:border-paper-300 focus:border-brand-400 focus:bg-white focus:outline-none"
+                    value={s.titel ?? def.titel}
+                    onChange={(e) => renameSpalte(s.id, e.target.value)}
+                    aria-label="Spaltentitel"
+                    title="Titel bearbeiten"
+                  />
                   <button
                     className="btn-ghost p-1 disabled:opacity-30"
-                    onClick={() => verschiebe(s.typ, -1)}
+                    onClick={() => verschiebe(s.id, -1)}
                     disabled={i === 0}
                     aria-label="nach oben"
                   >
@@ -253,18 +275,31 @@ export function KnickblattView({
                   </button>
                   <button
                     className="btn-ghost p-1 disabled:opacity-30"
-                    onClick={() => verschiebe(s.typ, 1)}
+                    onClick={() => verschiebe(s.id, 1)}
                     disabled={i === config.spalten.length - 1}
                     aria-label="nach unten"
                   >
                     ↓
                   </button>
+                  <button
+                    className="btn-ghost p-1 text-danger-500 disabled:opacity-20"
+                    onClick={() => deleteSpalte(s.id)}
+                    disabled={s.typ === 'vorlage'}
+                    aria-label="Spalte löschen"
+                    title="Spalte löschen"
+                  >
+                    <IconTrash width={15} height={15} />
+                  </button>
                 </li>
               );
             })}
           </ul>
+          <button className="btn-ghost mt-2 w-full justify-start text-sm" onClick={addSpalte}>
+            <IconPlus width={16} height={16} /> Eigene Spalte hinzufügen
+          </button>
           <p className="mt-2 text-xs text-ink-faint">
-            Vor „Auswendig schreiben" wird automatisch eine Falzlinie gedruckt.
+            Titel anklicken zum Umbenennen. Vor „Auswendig schreiben" wird automatisch eine Falzlinie
+            gedruckt.
           </p>
         </div>
 

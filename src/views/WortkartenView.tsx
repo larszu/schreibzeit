@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { EmptyState } from '@/components/ui';
 import { IconPrint } from '@/components/icons';
 import { PrintPortal } from '@/components/print/PrintPortal';
@@ -24,10 +24,13 @@ export function WortkartenView({
   const [mitArtikel, setMitArtikel] = useState(true);
   const [previewRef, scale] = useFitScale(PAGE_WIDTH_PX);
 
+  const initialisiertFuer = useRef<string | null>(null);
   useEffect(() => {
-    setAuswahl(new Set(woerter.map((w) => w.id)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kind.id]);
+    if (initialisiertFuer.current !== kind.id && woerter.length > 0) {
+      setAuswahl(new Set(woerter.map((w) => w.id)));
+      initialisiertFuer.current = kind.id;
+    }
+  }, [kind.id, woerter]);
 
   const gewaehlt = useMemo(() => woerter.filter((w) => auswahl.has(w.id)), [woerter, auswahl]);
 

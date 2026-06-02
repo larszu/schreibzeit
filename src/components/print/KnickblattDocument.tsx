@@ -34,14 +34,14 @@ export function KnickblattDocument({
           <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
             <colgroup>
               {spalten.map((s) => (
-                <col key={s.typ} style={{ width: s.istVorlage ? '18%' : 'auto' }} />
+                <col key={s.id} style={{ width: s.istVorlage ? '18%' : 'auto' }} />
               ))}
             </colgroup>
             <thead>
               <tr>
                 {spalten.map((s) => (
                   <th
-                    key={s.typ}
+                    key={s.id}
                     style={{
                       borderLeft: s.falzDavor ? '1.5px dashed #b3712a' : '1px solid #d8d4c8',
                     }}
@@ -65,7 +65,7 @@ export function KnickblattDocument({
                 <tr key={w.id} className="no-break">
                   {spalten.map((s) => (
                     <td
-                      key={s.typ}
+                      key={s.id}
                       style={{
                         borderLeft: s.falzDavor ? '1.5px dashed #b3712a' : '1px solid #e6e2d6',
                       }}
