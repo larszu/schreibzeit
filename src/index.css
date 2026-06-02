@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-paper-100 text-ink antialiased;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+/* Sichtbarer, ruhiger Fokusrahmen für Barrierefreiheit/Tastaturbedienung. */
+:focus-visible {
+  outline: 2px solid theme('colors.brand.500');
+  outline-offset: 2px;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium
+      transition-colors focus-visible:outline-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700;
+  }
+  .btn-secondary {
+    @apply btn border border-paper-300 bg-white text-ink hover:bg-paper-50;
+  }
+  .btn-ghost {
+    @apply btn text-ink-soft hover:bg-paper-200;
+  }
+  .btn-danger {
+    @apply btn bg-danger-500 text-white hover:bg-danger-600;
+  }
+  .input {
+    @apply w-full rounded-lg border border-paper-300 bg-white px-3 py-2 text-sm text-ink
+      placeholder:text-ink-faint focus:border-brand-400 focus:outline-none focus:ring-2
+      focus:ring-brand-200;
+  }
+  .label {
+    @apply mb-1 block text-sm font-medium text-ink-soft;
+  }
+  .card {
+    @apply rounded-xl2 border border-paper-200 bg-white shadow-soft;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+}
+
+/* ----------------------------------------------------------------------- */
+/* Druckansicht: nur der Druckbereich wird gedruckt, exakt A4 quer.         */
+/* ----------------------------------------------------------------------- */
+
+.print-root {
+  display: none;
+}
+
+@media screen {
+  /* Bildschirm-Vorschau des Druckbereichs (verkleinert, mit Papierschatten). */
+  .print-preview .print-page {
+    box-shadow: 0 2px 12px rgba(43, 42, 38, 0.18);
+    margin: 0 auto 1.5rem;
+    background: white;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
+  html,
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Alles außer dem Druckbereich ausblenden. */
+  body > #root .app-shell {
+    display: none !important;
+  }
+
+  .print-root {
+    display: block !important;
+  }
+
+  .print-page {
+    box-shadow: none !important;
+    margin: 0 !important;
+    page-break-after: always;
+  }
+  .print-page:last-child {
+    page-break-after: auto;
+  }
+
+  /* Zeilen/Karten nie über den Seitenrand zerreißen. */
+  .no-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Druckfarben exakt ausgeben (Lineatur, Mittelband). */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* A4-quer-Seite (297mm x 210mm) für Bildschirm-Vorschau und Druck. */
+.print-page {
+  width: 281mm; /* 297 - 2*8 Rand */
+  min-height: 194mm; /* 210 - 2*8 Rand */
+  box-sizing: border-box;
+  background: white;
+  color: #111;
+}

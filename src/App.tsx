@@ -1,0 +1,178 @@
+import { useEffect, useState } from 'react';
+import { Sidebar } from './components/Sidebar';
+import { KarteiView } from './views/KarteiView';
+import { KnickblattView } from './views/KnickblattView';
+import { UebungstextView } from './views/UebungstextView';
+import { WortkartenView } from './views/WortkartenView';
+import { EinstellungenModal } from './views/EinstellungenView';
+import { DatenschutzBanner } from './components/DatenschutzBanner';
+import { Modal } from './components/ui';
+import { IconBook, IconCards, IconFold, IconMenu, IconSparkles } from './components/icons';
+import { useEinstellungen, useKinder, useKlassen } from './state/hooks';
+import { displayName, useUiStore, type TabId } from './state/store';
+import { repository } from './db/repository';
+import { t } from './i18n/de';
+
+const TABS: { id: TabId; label: string; icon: typeof IconBook }[] = [
+  { id: 'kartei', label: t.nav.kartei, icon: IconBook },
+  { id: 'knickblatt', label: t.nav.knickblatt, icon: IconFold },
+  { id: 'uebungstext', label: t.nav.uebungstext, icon: IconSparkles },
+  { id: 'wortkarten', label: t.nav.wortkarten, icon: IconCards },
+];
+
+export default function App() {
+  const kinder = useKinder();
+  const klassen = useKlassen();
+  const einstellungen = useEinstellungen();
+  const { selectedKindId, activeTab, setTab, setSelectedKind, einstellungenOffen, setEinstellungenOffen } =
+    useUiStore();
+  const [sidebarOffen, setSidebarOffen] = useState(false);
+
+  // Sicherstellen, dass Einstellungen initialisiert sind.
+  useEffect(() => {
+    void repository.getEinstellungen();
+  }, []);
+
+  // Falls das ausgewählte Kind gelöscht wurde, Auswahl zurücksetzen.
+  useEffect(() => {
+    if (selectedKindId && !kinder.some((k) => k.id === selectedKindId)) {
+      setSelectedKind(kinder[0]?.id);
+    }
+  }, [kinder, selectedKindId, setSelectedKind]);
+
+  const kind = kinder.find((k) => k.id === selectedKindId);
+
+  return (
+    <>
+      <div className="app-shell flex h-full overflow-hidden">
+        {/* Sidebar – auf Mobil als Overlay */}
+        <div
+          className={`fixed inset-0 z-30 bg-ink/40 transition-opacity lg:hidden ${
+            sidebarOffen ? 'opacity-100' : 'pointer-events-none opacity-0'
+          }`}
+          onClick={() => setSidebarOffen(false)}
+        />
+        <div
+          className={`fixed inset-y-0 left-0 z-40 w-72 transform transition-transform lg:static lg:translate-x-0 ${
+            sidebarOffen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <Sidebar
+            kinder={kinder}
+            klassen={klassen}
+            einstellungen={einstellungen}
+            selectedKindId={selectedKindId}
+            onSelect={(id) => {
+              setSelectedKind(id);
+              setSidebarOffen(false);
+            }}
+            onOpenSettings={() => setEinstellungenOffen(true)}
+          />
+        </div>
+
+        {/* Hauptbereich */}
+        <main className="flex min-w-0 flex-1 flex-col bg-paper-100">
+          <header className="flex items-center gap-3 border-b border-paper-200 bg-paper-50 px-4 py-3">
+            <button
+              className="btn-ghost p-2 lg:hidden"
+              onClick={() => setSidebarOffen(true)}
+              aria-label="Menü öffnen"
+            >
+              <IconMenu />
+            </button>
+            {kind ? (
+              <div className="min-w-0">
+                <h1 className="truncate font-serif text-xl font-semibold text-ink">
+                  {displayName(kind.name, einstellungen.nurInitialen)}
+                </h1>
+                <p className="text-sm text-ink-soft">
+                  {t.lernstand[kind.lernstand]}
+                  {kind.klasseId &&
+                    ` · ${klassen.find((c) => c.id === kind.klasseId)?.name ?? ''}`}
+                </p>
+              </div>
+            ) : (
+              <h1 className="font-serif text-xl font-semibold text-ink">{t.app.name}</h1>
+            )}
+          </header>
+
+          {kind && (
+            <nav className="flex gap-1 overflow-x-auto border-b border-paper-200 bg-paper-50 px-2">
+              {TABS.map((tab) => {
+                const Icon = tab.icon;
+                const aktiv = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setTab(tab.id)}
+                    className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-2.5 text-sm font-medium transition-colors ${
+                      aktiv
+                        ? 'border-brand-500 text-brand-600'
+                        : 'border-transparent text-ink-soft hover:text-ink'
+                    }`}
+                    aria-current={aktiv ? 'page' : undefined}
+                  >
+                    <Icon width={18} height={18} />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </nav>
+          )}
+
+          <div className="flex-1 overflow-y-auto">
+            {!kind ? (
+              <div className="mx-auto max-w-2xl px-4 py-16">
+                <Willkommen onOpenSidebar={() => setSidebarOffen(true)} />
+              </div>
+            ) : (
+              <div className="mx-auto max-w-6xl px-4 py-5">
+                {activeTab === 'kartei' && <KarteiView kind={kind} />}
+                {activeTab === 'knickblatt' && (
+                  <KnickblattView kind={kind} einstellungen={einstellungen} klassen={klassen} />
+                )}
+                {activeTab === 'uebungstext' && (
+                  <UebungstextView kind={kind} einstellungen={einstellungen} />
+                )}
+                {activeTab === 'wortkarten' && (
+                  <WortkartenView kind={kind} einstellungen={einstellungen} klassen={klassen} />
+                )}
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+
+      <Modal
+        offen={einstellungenOffen}
+        titel={t.nav.einstellungen}
+        onClose={() => setEinstellungenOffen(false)}
+        weit
+      >
+        <EinstellungenModal einstellungen={einstellungen} onClose={() => setEinstellungenOffen(false)} />
+      </Modal>
+
+      {!einstellungen.datenschutzBestaetigt && <DatenschutzBanner />}
+    </>
+  );
+}
+
+function Willkommen({ onOpenSidebar }: { onOpenSidebar: () => void }) {
+  return (
+    <div className="card p-8 text-center">
+      <h2 className="font-serif text-2xl font-semibold text-ink">Willkommen bei Schreibzeit</h2>
+      <p className="mx-auto mt-3 max-w-prose text-ink-soft">
+        Führen Sie pro Kind eine Lernwörter-Kartei, erzeugen Sie druckfertige Knickblätter und
+        passende Übungstexte. Alle Daten bleiben lokal auf diesem Gerät.
+      </p>
+      <ol className="mx-auto mt-6 max-w-md space-y-2 text-left text-sm text-ink-soft">
+        <li>1. Links ein Kind anlegen (Klasse & Lernstand wählen).</li>
+        <li>2. Lernwörter eintippen oder aus einem Text herauspicken.</li>
+        <li>3. Knickblatt drucken oder einen KI-Übungstext erstellen.</li>
+      </ol>
+      <button className="btn-primary mt-6 lg:hidden" onClick={onOpenSidebar}>
+        Zur Kinderliste
+      </button>
+    </div>
+  );
+}

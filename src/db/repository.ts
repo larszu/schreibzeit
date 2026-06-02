@@ -224,11 +224,7 @@ class DexieRepository implements Repository {
   async clearAll(): Promise<void> {
     await db.transaction(
       'rw',
-      db.klassen,
-      db.kinder,
-      db.lernwoerter,
-      db.uebungstexte,
-      db.einstellungen,
+      [db.klassen, db.kinder, db.lernwoerter, db.uebungstexte, db.einstellungen],
       async () => {
         await Promise.all([
           db.klassen.clear(),

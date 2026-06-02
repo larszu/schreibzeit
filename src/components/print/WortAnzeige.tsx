@@ -1,0 +1,101 @@
+// Darstellung eines Lernworts als Vorlage – optional mit Silbenbögen und/oder
+// markierten Merkstellen. Wird im Knickblatt (Vorlage-Spalte) und auf
+// Wortkarten verwendet.
+import { breakpointsFromSyllables } from '@/core/syllables';
+
+const MERK_FARBE = '#c0492f';
+const BOGEN_FARBE = '#2f6f5e';
+
+export function WortAnzeige({
+  wort,
+  silben,
+  merkstellen,
+  mitSilben = false,
+  mitMerkstellen = false,
+  artikel,
+  groesse = 28,
+}: {
+  wort: string;
+  silben: string[];
+  merkstellen: number[];
+  mitSilben?: boolean;
+  mitMerkstellen?: boolean;
+  artikel?: string;
+  /** Schriftgröße in px. */
+  groesse?: number;
+}) {
+  const merkSet = new Set(merkstellen);
+  // Trennstellen aus den Silben ableiten, um die Bögen zu positionieren.
+  const breaks = mitSilben ? breakpointsFromSyllables(silben) : [];
+
+  // Wort in Silbensegmente zerlegen (für Bögen), Buchstaben einzeln rendern
+  // (für Merkstellen-Markierung).
+  const segmente: { text: string; start: number }[] = [];
+  let prev = 0;
+  for (const b of breaks) {
+    segmente.push({ text: wort.slice(prev, b), start: prev });
+    prev = b;
+  }
+  segmente.push({ text: wort.slice(prev), start: prev });
+
+  return (
+    <div
+      style={{ fontFamily: '"Source Serif 4", Georgia, serif', color: '#111' }}
+      className="leading-none"
+    >
+      {artikel && (
+        <span style={{ fontSize: groesse * 0.6, color: '#666', marginRight: 6 }}>{artikel}</span>
+      )}
+      <span style={{ display: 'inline-flex', alignItems: 'flex-end' }}>
+        {segmente.map((seg, si) => (
+          <span
+            key={si}
+            style={{
+              display: 'inline-flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <span style={{ fontSize: groesse, letterSpacing: '0.5px', whiteSpace: 'pre' }}>
+              {seg.text.split('').map((ch, ci) => {
+                const idx = seg.start + ci;
+                const markiert = mitMerkstellen && merkSet.has(idx);
+                return (
+                  <span
+                    key={ci}
+                    style={
+                      markiert
+                        ? {
+                            color: MERK_FARBE,
+                            borderBottom: `2px solid ${MERK_FARBE}`,
+                          }
+                        : undefined
+                    }
+                  >
+                    {ch}
+                  </span>
+                );
+              })}
+            </span>
+            {mitSilben && segmente.length > 1 && (
+              // Silbenbogen: nach unten geöffneter Bogen unter der Silbe.
+              <span
+                style={{
+                  display: 'block',
+                  width: '90%',
+                  height: groesse * 0.28,
+                  borderBottom: `2px solid ${BOGEN_FARBE}`,
+                  borderLeft: `2px solid ${BOGEN_FARBE}`,
+                  borderRight: `2px solid ${BOGEN_FARBE}`,
+                  borderBottomLeftRadius: '60%',
+                  borderBottomRightRadius: '60%',
+                  marginTop: 2,
+                }}
+              />
+            )}
+          </span>
+        ))}
+      </span>
+    </div>
+  );
+}

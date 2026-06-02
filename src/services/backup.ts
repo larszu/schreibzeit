@@ -119,11 +119,7 @@ export async function exportKind(kindId: string): Promise<Backup> {
 export async function importBackup(backup: Backup, modus: ImportModus): Promise<void> {
   await db.transaction(
     'rw',
-    db.klassen,
-    db.kinder,
-    db.lernwoerter,
-    db.uebungstexte,
-    db.einstellungen,
+    [db.klassen, db.kinder, db.lernwoerter, db.uebungstexte, db.einstellungen],
     async () => {
       if (modus === 'ersetzen') {
         await Promise.all([
