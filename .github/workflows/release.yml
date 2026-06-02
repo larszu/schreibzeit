@@ -1,0 +1,67 @@
+name: Release
+
+# Baut bei einem Tag vX.Y.Z den Web-Build sowie macOS- und Windows-Desktop-
+# Artefakte (inkl. Windows-Portable-.exe) und hängt sie ans GitHub-Release.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: Web-Build als ZIP packen
+        run: |
+          cd dist
+          zip -r ../schreibzeit-web.zip .
+      - name: Web-Build als Artefakt
+        uses: actions/upload-artifact@v4
+        with:
+          name: schreibzeit-web
+          path: dist
+      - name: Web-ZIP ans Release anhängen
+        uses: softprops/action-gh-release@v2
+        with:
+          files: schreibzeit-web.zip
+
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            build: npm run build:mac
+            artifacts: 'release/*.dmg'
+          - os: windows-latest
+            build: npm run build:win
+            artifacts: |
+              release/*.exe
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Desktop-App bauen
+        run: ${{ matrix.build }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Desktop-Artefakte ans Release anhängen
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifacts }}
