@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 
 /** Skaliert eine feste mm-/px-Breite so, dass sie in den Container passt. */
-export function useFitScale(pageWidthPx: number): [React.RefObject<HTMLDivElement>, number] {
+export function useFitScale(
+  pageWidthPx: number,
+): [React.RefObject<HTMLDivElement | null>, number] {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   useEffect(() => {

@@ -1,6 +1,7 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+/* Tailwind v4: das bestehende JS-Theme weiterverwenden. */
+@config '../tailwind.config.js';
 
 :root {
   color-scheme: light;
@@ -12,33 +13,40 @@ body,
   height: 100%;
 }
 
-body {
-  @apply bg-paper-100 text-ink antialiased;
-  font-feature-settings: 'cv11', 'ss01';
-}
+@layer base {
+  body {
+    @apply bg-paper-100 text-ink antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
 
-/* Sichtbarer, ruhiger Fokusrahmen für Barrierefreiheit/Tastaturbedienung. */
-:focus-visible {
-  outline: 2px solid theme('colors.brand.500');
-  outline-offset: 2px;
+  /* Sichtbarer, ruhiger Fokusrahmen für Barrierefreiheit/Tastaturbedienung. */
+  :focus-visible {
+    outline: 2px solid theme('colors.brand.500');
+    outline-offset: 2px;
+  }
 }
 
 @layer components {
-  .btn {
+  /* Gemeinsame Button-Basis (nur Utilities – v4-kompatibel). */
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost,
+  .btn-danger {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium
       transition-colors focus-visible:outline-2 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700;
+    @apply bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700;
   }
   .btn-secondary {
-    @apply btn border border-paper-300 bg-white text-ink hover:bg-paper-50;
+    @apply border border-paper-300 bg-white text-ink hover:bg-paper-50;
   }
   .btn-ghost {
-    @apply btn text-ink-soft hover:bg-paper-200;
+    @apply text-ink-soft hover:bg-paper-200;
   }
   .btn-danger {
-    @apply btn bg-danger-500 text-white hover:bg-danger-600;
+    @apply bg-danger-500 text-white hover:bg-danger-600;
   }
   .input {
     @apply w-full rounded-lg border border-paper-300 bg-white px-3 py-2 text-sm text-ink

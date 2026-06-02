@@ -146,8 +146,8 @@ Entwickelt für den realen Schulalltag: schnell, ruhig, professionell – und **
 | Ebene | Technologie |
 | ----- | ----------- |
 | Desktop-Shell | **Electron** + electron-builder (dmg · nsis · **portable**) |
-| UI | **React 18** + **TypeScript** |
-| Styling | **Tailwind CSS** (token-basiertes, papierhaftes Theme) |
+| UI | **React 19** + **TypeScript** |
+| Styling | **Tailwind CSS v4** (token-basiertes, papierhaftes Theme) |
 | State | **Zustand** + reaktive **Dexie** Live-Queries |
 | Persistenz | **IndexedDB** via Dexie.js (austauschbare Repository-Abstraktion) |
 | PWA | Service Worker + Manifest (offline, installierbar) |
@@ -161,7 +161,7 @@ Die App ist **offline-first**: jedes Projekt liegt lokal, der gesamte State blei
 
 ## 🚀 Erste Schritte
 
-**Voraussetzung:** [Node.js](https://nodejs.org/) 20+ und npm.
+**Voraussetzung:** [Node.js](https://nodejs.org/) **22+** und npm (Vite 8 benötigt Node ≥ 22.12).
 
 ```bash
 # 1. Abhängigkeiten installieren
