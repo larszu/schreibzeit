@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { IconDownload, IconUpload, IconTrash } from '@/components/icons';
+import { IconDownload, IconUpload, IconTrash, IconCheck } from '@/components/icons';
 import { repository } from '@/db/repository';
 import {
   exportAll,
@@ -23,8 +23,35 @@ export function EinstellungenModal({
   const fileRef = useRef<HTMLInputElement>(null);
   const [importInfo, setImportInfo] = useState<string | null>(null);
 
+  // API-Schlüssel/Modelle werden erst per „Speichern"-Button übernommen.
+  const [geminiKey, setGeminiKey] = useState(einstellungen.geminiApiKey);
+  const [geminiModell, setGeminiModell] = useState(einstellungen.geminiModell);
+  const [claudeKey, setClaudeKey] = useState(einstellungen.claudeApiKey);
+  const [claudeModell, setClaudeModell] = useState(einstellungen.claudeModell);
+  const [gespeichert, setGespeichert] = useState<string | null>(null);
+
+  function flash(m: string) {
+    setGespeichert(m);
+    window.setTimeout(() => setGespeichert(null), 2500);
+  }
+
   function set<K extends keyof Einstellungen>(key: K, value: Einstellungen[K]) {
     void repository.saveEinstellungen({ [key]: value } as Partial<Einstellungen>);
+  }
+
+  function speichereGemini() {
+    void repository.saveEinstellungen({
+      geminiApiKey: geminiKey.trim(),
+      geminiModell: geminiModell.trim() || 'gemini-2.5-flash',
+    });
+    flash('Gemini-Zugang gespeichert.');
+  }
+  function speichereClaude() {
+    void repository.saveEinstellungen({
+      claudeApiKey: claudeKey.trim(),
+      claudeModell: claudeModell.trim() || 'claude-opus-4-8',
+    });
+    flash('Claude-Zugang gespeichert.');
   }
 
   async function exportieren() {
@@ -60,6 +87,11 @@ export function EinstellungenModal({
 
   return (
     <div className="space-y-6">
+      {gespeichert && (
+        <div className="rounded-lg bg-brand-100 px-3 py-2 text-sm text-brand-700" role="status">
+          {gespeichert}
+        </div>
+      )}
       {/* KI / Gemini */}
       <section>
         <h3 className="mb-2 font-serif font-semibold text-ink">KI-Textfunktion (Google Gemini)</h3>
@@ -72,9 +104,9 @@ export function EinstellungenModal({
               id="set-key"
               type="password"
               className="input font-mono"
-              value={einstellungen.geminiApiKey}
+              value={geminiKey}
               placeholder="AIza…"
-              onChange={(e) => set('geminiApiKey', e.target.value)}
+              onChange={(e) => setGeminiKey(e.target.value)}
               autoComplete="off"
             />
             <p className="mt-1 text-xs text-ink-faint">
@@ -97,12 +129,17 @@ export function EinstellungenModal({
             <input
               id="set-modell"
               className="input font-mono"
-              value={einstellungen.geminiModell}
-              onChange={(e) => set('geminiModell', e.target.value)}
+              value={geminiModell}
+              onChange={(e) => setGeminiModell(e.target.value)}
             />
             <p className="mt-1 text-xs text-ink-faint">
               Standard: <code>gemini-2.5-flash</code>. Bei neuen Modellen hier anpassbar.
             </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="btn-primary" onClick={speichereGemini}>
+              <IconCheck width={18} height={18} /> Gemini-Zugang speichern
+            </button>
           </div>
         </div>
       </section>
@@ -134,9 +171,9 @@ export function EinstellungenModal({
                 id="set-claude-key"
                 type="password"
                 className="input font-mono"
-                value={einstellungen.claudeApiKey}
+                value={claudeKey}
                 placeholder="sk-ant-…"
-                onChange={(e) => set('claudeApiKey', e.target.value)}
+                onChange={(e) => setClaudeKey(e.target.value)}
                 autoComplete="off"
               />
               <p className="mt-1 text-xs text-ink-faint">
@@ -159,14 +196,17 @@ export function EinstellungenModal({
               <input
                 id="set-claude-modell"
                 className="input font-mono"
-                value={einstellungen.claudeModell}
-                onChange={(e) => set('claudeModell', e.target.value)}
+                value={claudeModell}
+                onChange={(e) => setClaudeModell(e.target.value)}
               />
               <p className="mt-1 text-xs text-ink-faint">
                 Standard: <code>claude-opus-4-8</code>. Für günstigere/schnellere Erkennung z. B.{' '}
                 <code>claude-haiku-4-5</code>.
               </p>
             </div>
+            <button className="btn-primary" onClick={speichereClaude}>
+              <IconCheck width={18} height={18} /> Claude-Zugang speichern
+            </button>
           </div>
         )}
       </section>
@@ -292,15 +332,19 @@ export function EinstellungenModal({
         {importInfo && <p className="mt-2 text-sm text-brand-700">{importInfo}</p>}
       </section>
 
-      {/* Gefahrenzone */}
-      <section className="rounded-lg border border-danger-500/30 bg-danger-500/5 p-3">
-        <h3 className="mb-1 font-serif font-semibold text-danger-600">Alle Daten löschen</h3>
-        <p className="mb-2 text-sm text-ink-soft">
-          Entfernt alle Klassen, Kinder, Lernwörter und Texte unwiderruflich von diesem Gerät.
-        </p>
-        <button className="btn-danger" onClick={allesLoeschen}>
-          <IconTrash width={18} height={18} /> Alle Daten löschen
-        </button>
+      {/* Zurücksetzen – bewusst zurückhaltend gestaltet */}
+      <section className="border-t border-paper-200 pt-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm text-ink-faint">
+            Alle Klassen, Kinder, Lernwörter und Texte unwiderruflich von diesem Gerät entfernen.
+          </p>
+          <button
+            className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-danger-600 hover:bg-danger-500/10"
+            onClick={allesLoeschen}
+          >
+            <IconTrash width={16} height={16} /> Alle Daten löschen
+          </button>
+        </div>
       </section>
     </div>
   );

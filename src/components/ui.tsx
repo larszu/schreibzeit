@@ -39,15 +39,17 @@ export function Modal({
       }}
     >
       <div
-        className={`card my-8 w-full ${weit ? 'max-w-3xl' : 'max-w-lg'} animate-[fadeIn_0.12s_ease-out]`}
+        className={`card my-4 flex max-h-[calc(100dvh-2rem)] w-full flex-col ${
+          weit ? 'max-w-3xl' : 'max-w-lg'
+        } animate-[fadeIn_0.12s_ease-out]`}
       >
-        <div className="flex items-center justify-between border-b border-paper-200 px-5 py-3.5">
+        <div className="flex shrink-0 items-center justify-between border-b border-paper-200 px-5 py-3.5">
           <h2 className="font-serif text-lg font-semibold text-ink">{titel}</h2>
           <button className="btn-ghost -mr-2 p-1.5" onClick={onClose} aria-label="Schließen">
             <IconClose />
           </button>
         </div>
-        <div className="px-5 py-4">{children}</div>
+        <div className="overflow-y-auto px-5 py-4">{children}</div>
       </div>
     </div>,
     document.body,

@@ -42,6 +42,36 @@ Entwickelt für den realen Schulalltag: schnell, ruhig, professionell – und **
 
 ---
 
+## 🚀 Loslegen – ganz ohne Technikkenntnisse
+
+Sie brauchen **nichts zu installieren, was Adminrechte erfordert**, und keine Programmiererfahrung. Wählen Sie einfach einen der drei Wege:
+
+### A) Windows-PC (z. B. Schulrechner) – die einfachste Variante
+
+1. Oben auf dieser Seite auf **„Releases"** klicken (rechte Spalte, „Releases").
+2. Bei der neuesten Version unter **„Assets"** die Datei **`Schreibzeit-Portable-….exe`** herunterladen.
+3. Die heruntergeladene Datei per **Doppelklick** starten – fertig. Es wird **nichts installiert**, keine Adminrechte nötig.
+   - Falls Windows eine blaue Warnung („Der Computer wurde geschützt") zeigt: auf **„Weitere Informationen" → „Trotzdem ausführen"** klicken (das erscheint nur, weil die Datei neu ist).
+4. Tipp: Legen Sie die `.exe` z. B. auf einen USB-Stick oder in Ihren Dokumente-Ordner. Beim nächsten Mal wieder doppelklicken.
+
+> Möchten Sie es lieber „richtig" installieren? Dann stattdessen die Datei **`Schreibzeit-Setup-….exe`** wählen.
+
+### B) Mac
+
+1. Auf **„Releases"** klicken und die Datei **`Schreibzeit-….dmg`** herunterladen.
+2. Die `.dmg` öffnen und **Schreibzeit** in den Ordner **„Programme"** ziehen.
+3. Beim ersten Start: **Rechtsklick auf das Programm → „Öffnen"** (einmalig, da die App nicht aus dem App Store kommt).
+
+### C) Ohne Download – direkt im Browser
+
+Öffnen Sie die gehostete Web-Version (Link im Bereich **„Releases"/„Deployments"** dieses Projekts) in **Chrome/Edge/Firefox/Safari**. Über das Browser-Menü **„Installieren"** bzw. **„Zum Startbildschirm hinzufügen"** wird daraus eine App, die danach auch **offline** läuft.
+
+**Was zuerst tun?** App öffnen → links **„Kind anlegen"** (beim ersten Kind legen Sie gleich eine Klasse an) → Lernwörter eintippen oder per Foto/Text einfügen → Tab **„Knickblatt"** → **„Drucken / als PDF"**. Über das Menü **Datei → Speichern** sichern Sie alle Daten in eine Datei; **Datei → Öffnen** lädt sie wieder.
+
+> Hinweis: Es gibt aktuell evtl. noch keine fertige Release-Datei. Ein Release (mit den oben genannten Dateien) entsteht automatisch, sobald im Projekt eine Version veröffentlicht wird – siehe [Releases](#releases-github-actions).
+
+---
+
 ## 📸 Screenshots
 
 <table>
@@ -66,9 +96,13 @@ Entwickelt für den realen Schulalltag: schnell, ruhig, professionell – und **
     </td>
   </tr>
   <tr>
-    <td colspan="2" align="center">
+    <td width="50%" align="center">
       <img src="docs/screenshots/wortkarten.png" alt="Druckbare Wortkarten zum Ausschneiden" width="420" /><br />
       <b>Wortkarten zum Ausschneiden</b>
+    </td>
+    <td width="50%" align="center">
+      <img src="docs/screenshots/einstellungen.png" alt="Einstellungen mit KI-Schlüsseln und Datensicherung" width="420" /><br />
+      <b>Einstellungen &amp; Datensicherung</b>
     </td>
   </tr>
 </table>
@@ -96,7 +130,7 @@ Entwickelt für den realen Schulalltag: schnell, ruhig, professionell – und **
 
 ### ✏️ Automatische Hilfen (immer editierbar)
 - **Wörterbuch-Silbentrennung** (offline, deutsche Trennmuster) – z. B. *Ap-fel*, *Som-mer*, *Erd-bee-re*
-- **Artikel-Vorschlag** (der/die/das) aus einem Grundwortschatz-Datensatz beim Tippen
+- **Artikel-Vorschlag** (der/die/das) beim Tippen – aus einem Wörterbuch mit **~90.000 Nomen** (deutsches Wiktionary) plus geprüftem Grundwortschatz; offline verfügbar
 - **Merkstellen-Vorschlag**: Doppelkonsonanten, *ie/ck/tz/ß*, Dehnungs-h, *v*, Umlaute, Diphthonge
 - Trennstellen &amp; Merkstellen per Klick korrigieren
 
@@ -130,17 +164,20 @@ Entwickelt für den realen Schulalltag: schnell, ruhig, professionell – und **
 ---
 
 ### 💾 Backup &amp; Datenportabilität
+- **Datei-Menü** (im UI-Design): **Öffnen**, **Speichern**, **Speichern unter …** (Tastenkürzel `Strg/⌘+S`, `Strg/⌘+O`) – wo möglich mit echter Datei (sonst Download)
 - Export aller Daten als **JSON** (Backup, Umzug zwischen Schul-PCs)
 - Import mit **Zusammenführen** oder **Ersetzen** (mit Sicherheitsabfrage)
-- Optional Export einzelner Kinder
+- **Hilfe → Über Schreibzeit** zeigt Version &amp; Infos
 
 ---
 
 ## 🔐 Datenschutz (DSGVO)
 - **Local-first:** alle Daten ausschließlich lokal (IndexedDB) auf dem Gerät
-- **Keine Telemetrie, kein Tracking, keine externen Aufrufe** – einzige Ausnahme: der bewusst ausgelöste Gemini-Aufruf
+- **Keine Telemetrie, kein Tracking, keine externen Aufrufe** – einzige Ausnahme: die bewusst ausgelösten KI-Funktionen (Übungstext/Foto-Texterkennung)
 - Option **„nur Initialen/Spitznamen statt Klarnamen"**
 - **„Alle Daten löschen"** entfernt sämtliche Daten unwiderruflich
+
+> Ausführliche Einschätzung inkl. der Pflichten der Schule bei KI-Nutzung: **[`docs/DSGVO.md`](docs/DSGVO.md)**.
 
 ---
 
@@ -163,7 +200,9 @@ Die App ist **offline-first**: jedes Projekt liegt lokal, der gesamte State blei
 
 ---
 
-## 🚀 Erste Schritte
+## 🧑‍💻 Für Entwickler (selbst bauen)
+
+> Nur nötig, wenn Sie die App **selbst aus dem Quellcode** bauen möchten. Zum reinen Nutzen siehe [„Loslegen"](#-loslegen--ganz-ohne-technikkenntnisse) oben.
 
 **Voraussetzung:** [Node.js](https://nodejs.org/) **22+** und npm (Vite 8 benötigt Node ≥ 22.12).
 
@@ -212,9 +251,10 @@ Der Schlüssel wird nur lokal gespeichert. Übertragen werden ausschließlich di
 
 ## 📚 Dokumentation
 
-- [`README` Build &amp; Architektur](#-tech-stack) — Tech-Stack &amp; Build-Skripte oben
+- [`docs/DSGVO.md`](docs/DSGVO.md) — ehrliche Datenschutz-/DSGVO-Einschätzung (auch mit KI)
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — Recherche zu Lehrkräfte-Wünschen, 20 Feature-Ideen &amp; „CRM"-Einordnung
 - [`docs/screenshots/README.md`](docs/screenshots/README.md) — Leitfaden zum Aufnehmen &amp; Anonymisieren der Screenshots
-- Quellstruktur: `src/core` (Logik) · `src/db` (Persistenz) · `src/services` (Backup, Gemini) · `src/views` (Oberfläche) · `electron/` (Desktop)
+- Quellstruktur: `src/core` (Logik) · `src/db` (Persistenz) · `src/services` (Backup, Gemini, Claude, OCR, Wörterbuch, Datei) · `src/views` (Oberfläche) · `electron/` (Desktop)
 
 ---
 

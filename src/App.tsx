@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
+import { AppMenuBar } from './components/AppMenuBar';
 import { KarteiView } from './views/KarteiView';
 import { KnickblattView } from './views/KnickblattView';
 import { UebungstextView } from './views/UebungstextView';
@@ -18,6 +19,7 @@ import {
 import { useEinstellungen, useKinder, useKlassen } from './state/hooks';
 import { displayName, useUiStore, type TabId } from './state/store';
 import { repository } from './db/repository';
+import { ladeWoerterbuch } from './services/dictionary';
 import { t } from './i18n/de';
 
 const TABS: { id: TabId; label: string; icon: typeof IconBook }[] = [
@@ -64,9 +66,11 @@ export default function App() {
     window.addEventListener('pointerup', onUp);
   }
 
-  // Sicherstellen, dass Einstellungen initialisiert sind.
+  // Sicherstellen, dass Einstellungen initialisiert sind, und das große
+  // Wörterbuch (Artikel) im Hintergrund nachladen.
   useEffect(() => {
     void repository.getEinstellungen();
+    void ladeWoerterbuch();
   }, []);
 
   // Falls das ausgewählte Kind gelöscht wurde, Auswahl zurücksetzen.
@@ -80,7 +84,9 @@ export default function App() {
 
   return (
     <>
-      <div className="app-shell flex h-full overflow-hidden">
+      <div className="app-shell flex h-full flex-col overflow-hidden">
+        <AppMenuBar />
+        <div className="flex min-h-0 flex-1">
         {/* Sidebar – auf Mobil als Overlay */}
         <div
           className={`fixed inset-0 z-30 bg-ink/40 transition-opacity lg:hidden ${
@@ -199,6 +205,7 @@ export default function App() {
             )}
           </div>
         </main>
+        </div>
       </div>
 
       <Modal

@@ -1,10 +1,15 @@
 // Electron-Hauptprozess. Lädt dieselbe gebaute Web-App (dist/) – eine
 // gemeinsame Codebasis für Web und Desktop. Im Desktop-Kontext funktioniert
 // auch der Gemini-Aufruf ohne CORS-Einschränkungen.
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, Menu, shell } = require('electron');
 const path = require('node:path');
 
 const isDev = !!process.env.ELECTRON_START_URL;
+
+app.setName('Schreibzeit');
+// Natives Menü ausblenden – die App bringt eine eigene, gestaltete Menüleiste
+// (Datei/Hilfe) mit, damit die Kopfzeile zum übrigen UI-Design passt.
+Menu.setApplicationMenu(null);
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -14,6 +19,7 @@ function createWindow() {
     minHeight: 600,
     backgroundColor: '#f6f3ec',
     title: 'Schreibzeit',
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,

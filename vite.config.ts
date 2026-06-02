@@ -2,11 +2,15 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'node:path';
+import pkg from './package.json';
 
 // Relative base so the build works both when hosted under a sub-path
 // (GitHub Pages) and when loaded from the local filesystem inside Electron.
 export default defineConfig({
   base: './',
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
@@ -41,7 +45,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        // json einschließen, damit das Wörterbuch (nouns.json) offline verfügbar ist.
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,json}'],
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         // The app must keep working offline; never try to reach the network
         // for navigation requests once cached.
         navigateFallback: 'index.html',

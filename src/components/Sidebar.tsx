@@ -46,9 +46,11 @@ export function Sidebar({
   return (
     <aside className="flex h-full flex-col border-r border-paper-200 bg-paper-50">
       <div className="flex items-center gap-2 px-4 py-4">
-        <span className="grid h-9 w-9 place-items-center rounded-lg bg-brand-500 font-serif text-lg font-bold text-white">
-          S
-        </span>
+        <img
+          src={`${import.meta.env.BASE_URL}favicon.svg`}
+          alt="Schreibzeit-Logo"
+          className="h-9 w-9 shrink-0 rounded-lg"
+        />
         <div className="min-w-0 flex-1">
           <p className="truncate font-serif text-lg font-semibold leading-tight text-ink">
             {t.app.name}
@@ -180,14 +182,18 @@ function KindModal({
   const kind = state.kind;
   const [name, setName] = useState('');
   const [klasseId, setKlasseId] = useState('');
+  const [neueKlasse, setNeueKlasse] = useState('');
   const [lernstand, setLernstand] = useState<Lernstand>('klasse2');
   const [notiz, setNotiz] = useState('');
+  // Beim ersten Kind (noch keine Klassen) direkt eine Klasse mit anlegen.
+  const klasseNeuModus = klassen.length === 0 || klasseId === '__neu__';
 
   // Felder bei jedem Öffnen synchronisieren.
   useEffect(() => {
     if (state.offen) {
       setName(kind?.name ?? '');
       setKlasseId(kind?.klasseId ?? '');
+      setNeueKlasse('');
       setLernstand(kind?.lernstand ?? 'klasse2');
       setNotiz(kind?.notiz ?? '');
     }
@@ -195,10 +201,16 @@ function KindModal({
 
   async function speichern() {
     if (!name.trim()) return;
+    // Falls eine neue Klasse eingegeben wurde, diese zuerst anlegen.
+    let zugewieseneKlasse: string | undefined = klasseId && klasseId !== '__neu__' ? klasseId : undefined;
+    if (klasseNeuModus && neueKlasse.trim()) {
+      const k = await repository.saveKlasse({ name: neueKlasse.trim() });
+      zugewieseneKlasse = k.id;
+    }
     const gespeichert = await repository.saveKind({
       id: kind?.id,
       name: name.trim(),
-      klasseId: klasseId || undefined,
+      klasseId: zugewieseneKlasse,
       lernstand,
       notiz: notiz.trim() || undefined,
     });
@@ -233,19 +245,39 @@ function KindModal({
             <label className="label" htmlFor="kind-klasse">
               Klasse
             </label>
-            <select
-              id="kind-klasse"
-              className="input"
-              value={klasseId}
-              onChange={(e) => setKlasseId(e.target.value)}
-            >
-              <option value="">— keine —</option>
-              {klassen.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            {klassen.length > 0 ? (
+              <select
+                id="kind-klasse"
+                className="input"
+                value={klasseId}
+                onChange={(e) => setKlasseId(e.target.value)}
+              >
+                <option value="">— keine —</option>
+                {klassen.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+                <option value="__neu__">+ Neue Klasse …</option>
+              </select>
+            ) : (
+              <input
+                id="kind-klasse"
+                className="input"
+                value={neueKlasse}
+                placeholder="z. B. 2a"
+                onChange={(e) => setNeueKlasse(e.target.value)}
+              />
+            )}
+            {klassen.length > 0 && klasseId === '__neu__' && (
+              <input
+                className="input mt-2"
+                value={neueKlasse}
+                placeholder="Name der neuen Klasse, z. B. 2a"
+                onChange={(e) => setNeueKlasse(e.target.value)}
+                autoFocus
+              />
+            )}
           </div>
           <div>
             <label className="label" htmlFor="kind-lernstand">

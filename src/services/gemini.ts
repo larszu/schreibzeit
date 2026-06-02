@@ -35,11 +35,16 @@ const LERNSTAND_HINWEIS: Record<Lernstand, string> = {
 };
 
 const TEXTART_HINWEIS: Record<TextArt, string> = {
-  geschichte: 'Schreibe eine kurze, zusammenhängende, kindgerechte Geschichte.',
+  geschichte:
+    'Schreibe eine kurze, in sich schlüssige Geschichte mit rotem Faden: Anfang, Mitte und Ende, ' +
+    'die logisch zusammenhängen. Es sollen dieselben Figuren/Dinge vorkommen, die Handlung soll ' +
+    'Sinn ergeben und altersgerecht sein.',
   lueckentext:
-    'Schreibe einen kurzen zusammenhängenden Text. Die Lernwörter werden später als Lücken ausgeblendet.',
+    'Schreibe einen kurzen, zusammenhängenden und sinnvollen Text (kleine Geschichte). Die Lernwörter ' +
+    'werden später als Lücken ausgeblendet.',
   quatschsaetze:
-    'Schreibe lustige, voneinander unabhängige Übungssätze (Quatschsätze). Jeder Satz steht in einer eigenen Zeile.',
+    'Schreibe lustige Übungssätze (Quatschsätze). Jeder Satz steht in einer eigenen Zeile, ist aber ' +
+    'grammatikalisch korrekt und für sich verständlich.',
 };
 
 /** Baut den Prompt für die Gemini-Anfrage (rein, testbar). */
@@ -53,7 +58,8 @@ export function buildPrompt(opts: GenerateOptions): string {
     TEXTART_HINWEIS[opts.textart],
     LERNSTAND_HINWEIS[opts.lernstand],
     `Verwende dabei zwingend alle folgenden Lernwörter, jeweils mindestens einmal: ${woerterListe}.`,
-    'Verwende die Lernwörter in ihrer angegebenen Grundform möglichst unverändert.',
+    'Verwende die Lernwörter natürlich und sinnvoll im Satz (nicht erzwungen aneinandergereiht), möglichst in ihrer angegebenen Grundform.',
+    'Achte auf korrekte Grammatik und einen nachvollziehbaren inhaltlichen Zusammenhang.',
     `Der Text soll ungefähr ${opts.laengeSaetze} Sätze lang sein.`,
     themaTeil,
     'Antworte ausschließlich mit dem fertigen Text auf Deutsch, ohne Überschrift, ohne Erklärungen, ohne Anführungszeichen um den ganzen Text.',
