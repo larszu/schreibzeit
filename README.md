@@ -13,8 +13,7 @@
 
 <p align="center">
   Pro Kind eine Lernwörter-Kartei führen und daraus per Klick druckfertige Knickblätter,
-  Wortkarten und passende Übungstexte erzeugen – komplett offline und ohne Adminrechte.
-</p>
+  Wortkarten und passende Übungstexte erzeugen – komplett offline.
 
 <!-- HERO-BILD — siehe docs/screenshots/README.md für Aufnahme- & Anonymisierungs-Leitfaden -->
 <p align="center">
