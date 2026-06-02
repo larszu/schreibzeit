@@ -24,7 +24,22 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
     },
+  });
+
+  // CSP-Header für alle Responses setzen.
+  win.webContents.session.webRequest.onHeadersReceived((details, cb) => {
+    cb({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' data: blob:; font-src 'self' data:; " +
+            "connect-src 'self' https://generativelanguage.googleapis.com https://api.anthropic.com;",
+        ],
+      },
+    });
   });
 
   // Externe Links im System-Browser öffnen (z. B. der API-Key-Link).
@@ -34,6 +49,17 @@ function createWindow() {
       return { action: 'deny' };
     }
     return { action: 'allow' };
+  });
+
+  // Navigation auf fremde Origins unterbinden.
+  const erlaubteOrigins = isDev
+    ? [process.env.ELECTRON_START_URL]
+    : ['file://'];
+  win.webContents.on('will-navigate', (e, url) => {
+    if (!erlaubteOrigins.some((o) => url.startsWith(o))) {
+      e.preventDefault();
+      void shell.openExternal(url);
+    }
   });
 
   if (isDev) {
@@ -48,6 +74,11 @@ app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+});
+
+// Webview-Einbettung unterbinden.
+app.on('web-contents-created', (_event, wc) => {
+  wc.on('will-attach-webview', (e) => e.preventDefault());
 });
 
 app.on('window-all-closed', () => {

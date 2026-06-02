@@ -40,11 +40,16 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-const ERLAUBT = /\.(ttf|otf|woff2?|)$/i;
+const ERLAUBT = /\.(ttf|otf|woff2?)$/i;
+const ERLAUBTE_MIMES = new Set([
+  'font/ttf', 'font/otf', 'font/woff', 'font/woff2',
+  'application/x-font-ttf', 'application/font-woff', 'application/font-woff2',
+  'application/vnd.ms-opentype', '',
+]);
 
 /** Fügt eine Schriftdatei hinzu und registriert sie sofort. */
 export async function fontHinzufuegen(name: string, file: File): Promise<FontEintrag> {
-  if (!ERLAUBT.test(file.name)) {
+  if (!ERLAUBT.test(file.name) || !ERLAUBTE_MIMES.has(file.type)) {
     throw new Error('Bitte eine Schriftdatei wählen (.ttf, .otf, .woff, .woff2).');
   }
   if (file.size > 6 * 1024 * 1024) {

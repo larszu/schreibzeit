@@ -211,12 +211,14 @@ class DexieRepository implements Repository {
   }
 
   async getEinstellungen(): Promise<Einstellungen> {
-    const e = await db.einstellungen.get('app');
-    if (!e) {
-      await db.einstellungen.put(DEFAULT_EINSTELLUNGEN);
-      return DEFAULT_EINSTELLUNGEN;
-    }
-    return { ...DEFAULT_EINSTELLUNGEN, ...e };
+    return db.transaction('rw', db.einstellungen, async () => {
+      const e = await db.einstellungen.get('app');
+      if (!e) {
+        await db.einstellungen.put(DEFAULT_EINSTELLUNGEN);
+        return DEFAULT_EINSTELLUNGEN;
+      }
+      return { ...DEFAULT_EINSTELLUNGEN, ...e };
+    });
   }
 
   async saveEinstellungen(patch: Partial<Einstellungen>): Promise<Einstellungen> {
