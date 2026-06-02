@@ -1,6 +1,3 @@
-// Datensicherung & -portabilität: Export/Import als JSON. Da es keinen Server
-// gibt, ist das der Weg, Daten zu sichern oder zwischen Schul-PCs umzuziehen.
-
 import { db } from '@/db/db';
 import type {
   Einstellungen,
@@ -39,6 +36,71 @@ export function buildBackup(daten: BackupDaten): Backup {
   };
 }
 
+// ── Validierung einzelner Records ──────────────────────────────────────
+
+const LERNSTAND_WERTE = new Set(['klasse1', 'klasse2', 'klasse3', 'klasse4', 'foerder', 'lrs']);
+const WORT_STATUS_WERTE = new Set(['neu', 'wird_geuebt', 'sitzt']);
+const TEXTART_WERTE = new Set(['geschichte', 'lueckentext', 'quatschsaetze']);
+
+function isString(v: unknown): v is string {
+  return typeof v === 'string';
+}
+function isNumber(v: unknown): v is number {
+  return typeof v === 'number' && Number.isFinite(v);
+}
+
+function validiereKlasse(r: unknown): r is Klasse {
+  if (!r || typeof r !== 'object') return false;
+  const k = r as Record<string, unknown>;
+  return isString(k.id) && isString(k.name) && isNumber(k.erstelltAm) && isNumber(k.geaendertAm);
+}
+
+function validiereKind(r: unknown): r is Kind {
+  if (!r || typeof r !== 'object') return false;
+  const k = r as Record<string, unknown>;
+  return (
+    isString(k.id) &&
+    isString(k.name) &&
+    LERNSTAND_WERTE.has(k.lernstand as string) &&
+    isNumber(k.erstelltAm) &&
+    isNumber(k.geaendertAm)
+  );
+}
+
+function validiereLernwort(r: unknown): r is Lernwort {
+  if (!r || typeof r !== 'object') return false;
+  const k = r as Record<string, unknown>;
+  return (
+    isString(k.id) &&
+    isString(k.kindId) &&
+    isString(k.wort) &&
+    WORT_STATUS_WERTE.has(k.status as string) &&
+    Array.isArray(k.silben) &&
+    Array.isArray(k.merkstellen) &&
+    isNumber(k.erstelltAm) &&
+    isNumber(k.geaendertAm)
+  );
+}
+
+function validiereUebungstext(r: unknown): r is Uebungstext {
+  if (!r || typeof r !== 'object') return false;
+  const k = r as Record<string, unknown>;
+  return (
+    isString(k.id) &&
+    isString(k.kindId) &&
+    isString(k.titel) &&
+    TEXTART_WERTE.has(k.textart as string) &&
+    isString(k.text) &&
+    isNumber(k.erstelltAm) &&
+    isNumber(k.geaendertAm)
+  );
+}
+
+/** Entfernt API-Schlüssel aus einer Einstellungen-Kopie. */
+function ohneSecrets(e: Einstellungen): Einstellungen {
+  return { ...e, geminiApiKey: '', claudeApiKey: '' };
+}
+
 /** Validiert und parst einen Backup-String. Wirft bei ungültigem Inhalt. */
 export function parseBackup(json: string): Backup {
   let obj: unknown;
@@ -60,15 +122,30 @@ export function parseBackup(json: string): Backup {
     );
   }
   const d = b.daten;
+
+  const klassen = (Array.isArray(d.klassen) ? d.klassen : []).filter(validiereKlasse);
+  const kinder = (Array.isArray(d.kinder) ? d.kinder : []).filter(validiereKind);
+  const lernwoerter = (Array.isArray(d.lernwoerter) ? d.lernwoerter : []).filter(validiereLernwort);
+  const uebungstexte = (Array.isArray(d.uebungstexte) ? d.uebungstexte : []).filter(validiereUebungstext);
+
+  // Referentielle Integrität: nur Records mit gültigem Eltern-Bezug behalten.
+  const klassenIds = new Set(klassen.map((k) => k.id));
+  const kinderIds = new Set(kinder.map((k) => k.id));
+  const kinderClean = kinder.map((k) =>
+    k.klasseId && !klassenIds.has(k.klasseId) ? { ...k, klasseId: undefined } : k,
+  );
+  const lernwoerterClean = lernwoerter.filter((l) => kinderIds.has(l.kindId));
+  const uebungstexteClean = uebungstexte.filter((u) => kinderIds.has(u.kindId));
+
   return {
     schreibzeit: true,
     version: b.version,
     exportiertAm: b.exportiertAm ?? Date.now(),
     daten: {
-      klassen: Array.isArray(d.klassen) ? d.klassen : [],
-      kinder: Array.isArray(d.kinder) ? d.kinder : [],
-      lernwoerter: Array.isArray(d.lernwoerter) ? d.lernwoerter : [],
-      uebungstexte: Array.isArray(d.uebungstexte) ? d.uebungstexte : [],
+      klassen,
+      kinder: kinderClean,
+      lernwoerter: lernwoerterClean,
+      uebungstexte: uebungstexteClean,
       einstellungen: d.einstellungen,
     },
   };
@@ -99,7 +176,7 @@ export async function exportAll(): Promise<Backup> {
     kinder,
     lernwoerter,
     uebungstexte,
-    einstellungen: einstellungen ?? undefined,
+    einstellungen: einstellungen ? ohneSecrets(einstellungen) : undefined,
   });
 }
 
@@ -130,13 +207,19 @@ export async function importBackup(backup: Backup, modus: ImportModus): Promise<
         ]);
       }
       const d = backup.daten;
-      // bulkPut überschreibt bestehende IDs → entspricht „zusammenführen".
       await db.klassen.bulkPut(d.klassen);
       await db.kinder.bulkPut(d.kinder);
       await db.lernwoerter.bulkPut(d.lernwoerter);
       await db.uebungstexte.bulkPut(d.uebungstexte);
+      // Einstellungen aus Backup importieren, aber nie API-Keys übernehmen.
       if (d.einstellungen) {
-        await db.einstellungen.put({ ...d.einstellungen, id: 'app' });
+        const current = await db.einstellungen.get('app');
+        await db.einstellungen.put({
+          ...d.einstellungen,
+          id: 'app',
+          geminiApiKey: current?.geminiApiKey ?? '',
+          claudeApiKey: current?.claudeApiKey ?? '',
+        });
       }
     },
   );
