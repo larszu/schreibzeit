@@ -7,9 +7,6 @@
 <p align="center">
   <img src="https://img.shields.io/badge/platform-Web%20%7C%20macOS%20%7C%20Windows-blue" />
   <img src="https://img.shields.io/badge/offline-ready-success" />
-  <img src="https://img.shields.io/badge/PWA-installierbar-5a0fc8" />
-  <img src="https://img.shields.io/badge/built%20with-React%20%2B%20Electron-9cf" />
-  <img src="https://img.shields.io/badge/typescript-strongly%20typed-blue" />
   <img src="https://img.shields.io/badge/DSGVO-local--first-success" />
   <img src="https://img.shields.io/badge/license-MIT-lightgrey" />
 </p>
