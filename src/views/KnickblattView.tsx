@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { EmptyState } from '@/components/ui';
-import { IconPrint, IconCheck, IconPlus, IconTrash } from '@/components/icons';
+import { IconPrint, IconCheck, IconPlus, IconTrash, IconGrip } from '@/components/icons';
 import { PrintPortal } from '@/components/print/PrintPortal';
 import { useFitScale } from '@/components/print/useFitScale';
 import { newId } from '@/core/id';
@@ -77,6 +77,7 @@ export function KnickblattView({
   const [thema, setThema] = useState('');
   const [stapel, setStapel] = useState(false);
   const [klassenDaten, setKlassenDaten] = useState<{ kind: Kind; woerter: Lernwort[] }[]>([]);
+  const [dragId, setDragId] = useState<string | null>(null);
   const [previewRef, scale] = useFitScale(PAGE_WIDTH_PX);
 
   // Stapeldruck: Wörter aller Kinder der Klasse laden (eine Seite je Kind).
@@ -166,13 +167,16 @@ export function KnickblattView({
       { id: newId(), typ: 'benutzerdefiniert', titel: 'Neue Spalte', aktiv: true },
     ]);
   }
-  function verschiebe(id: string, richtung: -1 | 1) {
-    const idx = config.spalten.findIndex((s) => s.id === id);
-    const ziel = idx + richtung;
-    if (idx < 0 || ziel < 0 || ziel >= config.spalten.length) return;
-    const neu = [...config.spalten];
-    [neu[idx], neu[ziel]] = [neu[ziel], neu[idx]];
-    setSpalten(neu);
+  // Drag&Drop-Sortierung der Spalten.
+  function moveSpalte(fromId: string, toId: string) {
+    if (fromId === toId) return;
+    const liste = [...config.spalten];
+    const from = liste.findIndex((s) => s.id === fromId);
+    const to = liste.findIndex((s) => s.id === toId);
+    if (from < 0 || to < 0) return;
+    const [bewegt] = liste.splice(from, 1);
+    liste.splice(to, 0, bewegt);
+    setSpalten(liste);
   }
 
   // Wortauswahl-Presets
@@ -339,13 +343,30 @@ export function KnickblattView({
         <div className="card p-4">
           <h3 className="mb-2 font-serif font-semibold text-ink">Spalten</h3>
           <ul className="space-y-1">
-            {config.spalten.map((s, i) => {
+            {config.spalten.map((s) => {
               const def = SPALTEN_DEFS[s.typ];
               return (
                 <li
                   key={s.id}
-                  className="flex items-center gap-1.5 rounded-md px-1.5 py-1 hover:bg-paper-100"
+                  draggable
+                  onDragStart={() => setDragId(s.id)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => {
+                    if (dragId) moveSpalte(dragId, s.id);
+                    setDragId(null);
+                  }}
+                  onDragEnd={() => setDragId(null)}
+                  className={`flex items-center gap-1.5 rounded-md px-1.5 py-1 hover:bg-paper-100 ${
+                    dragId === s.id ? 'opacity-50' : ''
+                  }`}
                 >
+                  <span
+                    className="shrink-0 cursor-grab text-ink-faint active:cursor-grabbing"
+                    aria-hidden="true"
+                    title="Zum Sortieren ziehen"
+                  >
+                    <IconGrip width={16} height={16} />
+                  </span>
                   <input
                     type="checkbox"
                     className="h-4 w-4 shrink-0 accent-brand-500"
@@ -370,22 +391,6 @@ export function KnickblattView({
                     title="Titel bearbeiten"
                   />
                   <button
-                    className="btn-ghost p-1 disabled:opacity-30"
-                    onClick={() => verschiebe(s.id, -1)}
-                    disabled={i === 0}
-                    aria-label="nach oben"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    className="btn-ghost p-1 disabled:opacity-30"
-                    onClick={() => verschiebe(s.id, 1)}
-                    disabled={i === config.spalten.length - 1}
-                    aria-label="nach unten"
-                  >
-                    ↓
-                  </button>
-                  <button
                     className="btn-ghost p-1 text-danger-500 disabled:opacity-20"
                     onClick={() => deleteSpalte(s.id)}
                     disabled={s.typ === 'vorlage'}
@@ -402,8 +407,8 @@ export function KnickblattView({
             <IconPlus width={16} height={16} /> Eigene Spalte hinzufügen
           </button>
           <p className="mt-2 text-xs text-ink-faint">
-            Titel anklicken zum Umbenennen. Vor „Auswendig schreiben" wird automatisch eine Falzlinie
-            gedruckt.
+            Zum Sortieren am Griff ziehen · Symbol/Titel anklicken zum Ändern. Vor „Auswendig
+            schreiben" wird automatisch eine Falzlinie gedruckt.
           </p>
         </div>
 

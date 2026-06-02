@@ -169,7 +169,7 @@ export function KarteiView({
       />
 
       {uebersichtDruck && (
-        <PrintPortal>
+        <PrintPortal solo>
           <LernstandDocument
             kindName={displayName(kind.name, einstellungen.nurInitialen)}
             lernstand={t.lernstand[kind.lernstand]}

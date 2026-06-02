@@ -6,9 +6,11 @@ import {
   IconUsers,
   IconEdit,
   IconTrash,
-  IconPanelLeft,
+  IconKey,
 } from './icons';
 import { Modal } from './ui';
+import { PrintPortal } from './print/PrintPortal';
+import { NamensschluesselDocument } from './print/NamensschluesselDocument';
 import { repository } from '@/db/repository';
 import { displayName } from '@/state/store';
 import { t } from '@/i18n/de';
@@ -23,7 +25,6 @@ export function Sidebar({
   selectedKindId,
   onSelect,
   onOpenSettings,
-  onCollapse,
 }: {
   kinder: Kind[];
   klassen: Klasse[];
@@ -31,11 +32,11 @@ export function Sidebar({
   selectedKindId?: string;
   onSelect: (id: string) => void;
   onOpenSettings: () => void;
-  onCollapse?: () => void;
 }) {
   const [suche, setSuche] = useState('');
   const [kindModal, setKindModal] = useState<{ offen: boolean; kind?: Kind }>({ offen: false });
   const [klassenModal, setKlassenModal] = useState(false);
+  const [schluesselDruck, setSchluesselDruck] = useState(false);
 
   const gefiltert = useMemo(() => {
     const q = suche.trim().toLowerCase();
@@ -45,31 +46,8 @@ export function Sidebar({
 
   return (
     <aside className="flex h-full flex-col border-r border-paper-200 bg-paper-50">
-      <div className="flex items-center gap-2 px-4 py-4">
-        <img
-          src={`${import.meta.env.BASE_URL}favicon.svg`}
-          alt="Schreibzeit-Logo"
-          className="h-9 w-9 shrink-0 rounded-lg"
-        />
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-serif text-lg font-semibold leading-tight text-ink">
-            {t.app.name}
-          </p>
-          <p className="truncate text-xs text-ink-faint">{t.app.tagline}</p>
-        </div>
-        {onCollapse && (
-          <button
-            className="btn-ghost hidden p-1.5 lg:inline-flex"
-            onClick={onCollapse}
-            aria-label="Seitenleiste ausblenden"
-            title="Seitenleiste ausblenden"
-          >
-            <IconPanelLeft width={18} height={18} />
-          </button>
-        )}
-      </div>
-
-      <div className="px-3">
+      {/* Kein Logo/Titel mehr – steht bereits in der Menüleiste oben links. */}
+      <div className="px-3 pt-3">
         <div className="relative">
           <IconSearch
             width={16}
@@ -149,6 +127,16 @@ export function Sidebar({
         <button className="btn-ghost w-full justify-start" onClick={() => setKlassenModal(true)}>
           <IconUsers width={18} height={18} /> Klassen verwalten
         </button>
+        <button
+          className="btn-ghost w-full justify-start"
+          onClick={() => {
+            setSchluesselDruck(true);
+            setTimeout(() => window.print(), 60);
+          }}
+          title="Zuordnung Kürzel ↔ Klarname zum Ausdrucken (offline aufbewahren)"
+        >
+          <IconKey width={18} height={18} /> Namensschlüssel drucken
+        </button>
         <button className="btn-ghost w-full justify-start" onClick={onOpenSettings}>
           <IconSettings width={18} height={18} /> {t.nav.einstellungen}
         </button>
@@ -164,6 +152,17 @@ export function Sidebar({
         }}
       />
       <KlassenModal offen={klassenModal} klassen={klassen} onClose={() => setKlassenModal(false)} />
+
+      {schluesselDruck && (
+        <PrintPortal solo>
+          <NamensschluesselDocument
+            kinder={kinder}
+            klassen={klassen}
+            schule={einstellungen.schulName || undefined}
+            lehrkraft={einstellungen.lehrkraftName || undefined}
+          />
+        </PrintPortal>
+      )}
     </aside>
   );
 }

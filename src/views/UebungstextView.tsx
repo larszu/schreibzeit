@@ -285,7 +285,7 @@ export function UebungstextView({
       </div>
 
       {druckText && (
-        <PrintPortal>
+        <PrintPortal solo>
           <TextDocument
             titel={druckText.titel}
             text={druckText.text}

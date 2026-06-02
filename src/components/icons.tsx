@@ -120,6 +120,22 @@ export const IconList = (p: P) => (
     <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
   </svg>
 );
+export const IconGrip = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="9" cy="6" r="1" />
+    <circle cx="9" cy="12" r="1" />
+    <circle cx="9" cy="18" r="1" />
+    <circle cx="15" cy="6" r="1" />
+    <circle cx="15" cy="12" r="1" />
+    <circle cx="15" cy="18" r="1" />
+  </svg>
+);
+export const IconKey = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M15 7a4 4 0 1 0-3.9 5L7 16l2 2-1 1-2-2-1.5 1.5L3 17l8-8A4 4 0 0 0 15 7z" />
+    <circle cx="16.5" cy="6.5" r="0.6" />
+  </svg>
+);
 export const IconCamera = (p: P) => (
   <svg {...base(p)}>
     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />

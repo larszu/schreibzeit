@@ -114,7 +114,6 @@ export default function App() {
                   setSidebarOffen(false);
                 }}
                 onOpenSettings={() => setEinstellungenOffen(true)}
-                onCollapse={() => setSidebarCollapsed(true)}
               />
               {/* Breite ziehen (nur Desktop) */}
               <div

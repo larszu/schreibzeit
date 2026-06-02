@@ -19,6 +19,10 @@
 - **Betroffenenrechte technisch unterstützt:** Export (Auskunft/Portabilität) und
   „Alle Daten löschen" (Löschung) sind eingebaut; Korrektur jederzeit möglich.
 - **Datenminimierung:** Option „nur Initialen/Spitznamen statt Klarnamen".
+- **Pseudonym-Workflow (empfohlen):** Kinder nur mit Nummern/Decknamen anlegen, sodass in der App
+  **gar kein Klarname** gespeichert wird. Den Schlüssel „Kürzel → Klarname" über
+  **„Namensschlüssel drucken"** ausgeben, von Hand ausfüllen und **offline/abschließbar** aufbewahren.
+  Damit existiert die Zuordnung nur auf Papier, die digitalen Daten bleiben ohne Personenbezug.
 
 ➡️ **Für den reinen Offline-Betrieb (Kartei, Knickblatt, Wortkarten, Druck) ist die
 App aus Datenschutzsicht unkritisch** – vergleichbar mit einer lokalen Datei auf dem

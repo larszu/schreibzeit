@@ -58,13 +58,25 @@ Sie brauchen **nichts zu installieren, was Adminrechte erfordert**, und keine Pr
 2. Die `.dmg` öffnen und **Schreibzeit** in den Ordner **„Programme"** ziehen.
 3. Beim ersten Start: **Rechtsklick auf das Programm → „Öffnen"** (einmalig, da die App nicht aus dem App Store kommt).
 
-### C) Ohne Download – direkt im Browser
+### C) Web-Version (nur für gehostete Nutzung)
 
-Öffnen Sie die gehostete Web-Version (Link im Bereich **„Releases"/„Deployments"** dieses Projekts) in **Chrome/Edge/Firefox/Safari**. Über das Browser-Menü **„Installieren"** bzw. **„Zum Startbildschirm hinzufügen"** wird daraus eine App, die danach auch **offline** läuft.
+Die im Release enthaltene Datei **`Schreibzeit-Web-….zip`** ist **nicht zum Doppelklicken** gedacht.
+Sie enthält die fertige Web-App und ist für die **Bereitstellung auf einem Webserver** vorgesehen
+(z. B. durch die Schul-IT oder über GitHub Pages). Erst über eine so bereitgestellte
+**Internet-/Intranet-Adresse** lässt sich die App im Browser öffnen und dort über das Browser-Menü
+**„Installieren"/„Zum Startbildschirm hinzufügen"** als App ablegen (läuft danach offline).
 
-**Was zuerst tun?** App öffnen → links **„Kind anlegen"** (beim ersten Kind legen Sie gleich eine Klasse an) → Lernwörter eintippen oder per Foto/Text einfügen → Tab **„Knickblatt"** → **„Drucken / als PDF"**. Über das Menü **Datei → Speichern** sichern Sie alle Daten in eine Datei; **Datei → Öffnen** lädt sie wieder.
+➡️ **Für ein einzelnes Gerät ohne Server ist A) (Windows-Portable) bzw. B) (Mac) der richtige Weg** –
+da ist kein Hosting nötig.
 
-> Hinweis: Es gibt aktuell evtl. noch keine fertige Release-Datei. Ein Release (mit den oben genannten Dateien) entsteht automatisch, sobald im Projekt eine Version veröffentlicht wird – siehe [Releases](#releases-github-actions).
+> **Erster Start:** App öffnen → links **„Kind anlegen"** (beim ersten Kind legen Sie gleich eine
+> Klasse an) → Lernwörter eintippen oder per Foto/Text einfügen → Tab **„Knickblatt"** →
+> **„Drucken / als PDF"**. Über **Datei → Speichern** sichern Sie alle Daten in eine Datei;
+> **Datei → Öffnen** lädt sie wieder.
+
+> Hinweis: Wenn im Projekt noch kein Release veröffentlicht wurde, gibt es die o. g. Dateien noch
+> nicht – ein Release entsteht automatisch beim Veröffentlichen einer Version (siehe
+> [Releases](#releases-github-actions)).
 
 ---
 
@@ -191,6 +203,7 @@ Kartei eines Kindes dann **„Aus Grundwortschatz"** öffnen → einzelne Wörte
 - **Local-first:** alle Daten ausschließlich lokal (IndexedDB) auf dem Gerät
 - **Keine Telemetrie, kein Tracking, keine externen Aufrufe** – einzige Ausnahme: die bewusst ausgelösten KI-Funktionen (Übungstext/Foto-Texterkennung)
 - Option **„nur Initialen/Spitznamen statt Klarnamen"**
+- **Pseudonym-Workflow:** Kinder nur mit **Nummern/Decknamen** anlegen und den **Klarnamen über „Namensschlüssel drucken"** auf Papier festhalten (offline &amp; sicher aufbewahren) – so liegt **kein Klarname in der App**
 - **„Alle Daten löschen"** entfernt sämtliche Daten unwiderruflich
 
 > Ausführliche Einschätzung inkl. der Pflichten der Schule bei KI-Nutzung: **[`docs/DSGVO.md`](docs/DSGVO.md)**.
