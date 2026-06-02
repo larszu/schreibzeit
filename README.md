@@ -69,14 +69,13 @@ Sie enthält die fertige Web-App und ist für die **Bereitstellung auf einem Web
 ➡️ **Für ein einzelnes Gerät ohne Server ist A) (Windows-Portable) bzw. B) (Mac) der richtige Weg** –
 da ist kein Hosting nötig.
 
+
+
+
 > **Erster Start:** App öffnen → links **„Kind anlegen"** (beim ersten Kind legen Sie gleich eine
 > Klasse an) → Lernwörter eintippen oder per Foto/Text einfügen → Tab **„Knickblatt"** →
 > **„Drucken / als PDF"**. Über **Datei → Speichern** sichern Sie alle Daten in eine Datei;
 > **Datei → Öffnen** lädt sie wieder.
-
-> Hinweis: Wenn im Projekt noch kein Release veröffentlicht wurde, gibt es die o. g. Dateien noch
-> nicht – ein Release entsteht automatisch beim Veröffentlichen einer Version (siehe
-> [Releases](#releases-github-actions)).
 
 ---
 
