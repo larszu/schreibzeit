@@ -113,7 +113,6 @@ export default function App() {
                   setSelectedKind(id);
                   setSidebarOffen(false);
                 }}
-                onOpenSettings={() => setEinstellungenOffen(true)}
               />
               {/* Breite ziehen (nur Desktop) */}
               <div

@@ -4,7 +4,12 @@
 declare const __APP_VERSION__: string;
 
 interface Window {
-  schreibzeit?: { istDesktop: boolean; plattform: string };
+  schreibzeit?: {
+    istDesktop: boolean;
+    plattform: string;
+    print?: () => Promise<boolean>;
+    printToPDF?: () => Promise<boolean>;
+  };
 }
 
 declare module 'hyphen/de' {

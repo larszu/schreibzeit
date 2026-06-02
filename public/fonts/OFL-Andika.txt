@@ -1,0 +1,7 @@
+Schriftart "Andika" © SIL International.
+Lizenz: SIL Open Font License, Version 1.1 (OFL-1.1).
+Volltext der Lizenz: https://openfontlicense.org  ·  Projekt: https://software.sil.org/andika/
+
+Andika ist eine für Leseanfänger/Grundschule gestaltete, gut lesbare Schrift
+(eindeutige Buchstabenformen, z. B. einstöckiges a). Hier nur der Latin-Subset
+(inkl. deutscher Umlaute/ß) gebündelt. Weitergabe gemäß OFL-1.1 zulässig.

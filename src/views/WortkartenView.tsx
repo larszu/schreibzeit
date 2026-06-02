@@ -6,6 +6,7 @@ import { useFitScale } from '@/components/print/useFitScale';
 import { WortkartenDocument } from '@/components/print/WortkartenDocument';
 import { useLernwoerter } from '@/state/hooks';
 import { t } from '@/i18n/de';
+import { drucke } from '@/services/print';
 import type { Einstellungen, Kind, Klasse } from '@/types';
 
 const PAGE_WIDTH_PX = 281 * 3.7795;
@@ -129,7 +130,7 @@ export function WortkartenView({
           <p className="text-sm text-ink-soft">Vorschau · A4 quer · zum Ausschneiden</p>
           <button
             className="btn-primary"
-            onClick={() => window.print()}
+            onClick={() => drucke()}
             disabled={gewaehlt.length === 0}
           >
             <IconPrint width={18} height={18} /> {t.common.drucken}

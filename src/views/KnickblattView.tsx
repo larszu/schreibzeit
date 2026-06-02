@@ -13,12 +13,13 @@ import {
   LINEATUR_LABEL,
   createDefaultKnickblattConfig,
   defaultKnickspalten,
-  resolveLineatur,
+  resolveLineaturRender,
 } from '@/core/knickblatt';
 import { useFonts, useLernwoerter } from '@/state/hooks';
 import { displayName } from '@/state/store';
 import { repository } from '@/db/repository';
 import { t } from '@/i18n/de';
+import { drucke } from '@/services/print';
 import type {
   Einstellungen,
   Kind,
@@ -124,7 +125,7 @@ export function KnickblattView({
   });
   const kopf = kopfFuer(kind);
   const klassenName = klassen.find((c) => c.id === kind.klasseId)?.name;
-  const lineaturMasse = resolveLineatur(config.lineatur, einstellungen.customLineaturen);
+  const lineaturRender = resolveLineaturRender(config.lineatur, einstellungen.customLineaturen);
 
   // Schnellvorlagen: Standardwerte bzw. ein LRS-/leicht-Preset.
   function presetStandard() {
@@ -300,7 +301,8 @@ export function KnickblattView({
                   setConfig((c) => ({ ...c, vorlageFont: e.target.value || undefined }))
                 }
               >
-                <option value="">Standard (Serif)</option>
+                <option value="Andika">Andika (Fibelschrift, Standard)</option>
+                <option value="'Source Serif 4', Georgia, serif">Serif (klassisch)</option>
                 <option value="'Inter', system-ui, sans-serif">Serifenlos (LRS-freundlich)</option>
                 {fonts.map((f) => (
                   <option key={f.id} value={f.name}>
@@ -468,7 +470,7 @@ export function KnickblattView({
           </p>
           <button
             className="btn-primary"
-            onClick={() => window.print()}
+            onClick={() => drucke()}
             disabled={stapel ? klassenDaten.length === 0 : ausgewaehlteWoerter.length === 0}
           >
             <IconPrint width={18} height={18} /> {t.common.drucken}
@@ -493,7 +495,7 @@ export function KnickblattView({
               woerter={ausgewaehlteWoerter}
               config={config}
               kopf={kopf}
-              lineaturMasse={lineaturMasse}
+              lineaturRender={lineaturRender}
             />
           </div>
         </div>
@@ -520,7 +522,7 @@ export function KnickblattView({
               woerter={d.woerter}
               config={config}
               kopf={kopfFuer(d.kind)}
-              lineaturMasse={lineaturMasse}
+              lineaturRender={lineaturRender}
             />
           ))
         ) : (
@@ -528,7 +530,7 @@ export function KnickblattView({
             woerter={ausgewaehlteWoerter}
             config={config}
             kopf={kopf}
-            lineaturMasse={lineaturMasse}
+            lineaturRender={lineaturRender}
           />
         )}
       </PrintPortal>

@@ -44,7 +44,7 @@ export function WortAnzeige({
   return (
     <div
       style={{
-        fontFamily: fontFamily?.trim() || '"Source Serif 4", Georgia, serif',
+        fontFamily: fontFamily?.trim() || '"Andika", "Source Serif 4", Georgia, serif',
         color: '#111',
       }}
       className="leading-none"

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   IconPlus,
   IconSearch,
-  IconSettings,
   IconUsers,
   IconEdit,
   IconTrash,
@@ -14,6 +13,7 @@ import { NamensschluesselDocument } from './print/NamensschluesselDocument';
 import { repository } from '@/db/repository';
 import { displayName } from '@/state/store';
 import { t } from '@/i18n/de';
+import { drucke } from '@/services/print';
 import type { Einstellungen, Kind, Klasse, Lernstand } from '@/types';
 
 const LERNSTAENDE: Lernstand[] = ['klasse1', 'klasse2', 'klasse3', 'klasse4', 'foerder', 'lrs'];
@@ -24,14 +24,12 @@ export function Sidebar({
   einstellungen,
   selectedKindId,
   onSelect,
-  onOpenSettings,
 }: {
   kinder: Kind[];
   klassen: Klasse[];
   einstellungen: Einstellungen;
   selectedKindId?: string;
   onSelect: (id: string) => void;
-  onOpenSettings: () => void;
 }) {
   const [suche, setSuche] = useState('');
   const [kindModal, setKindModal] = useState<{ offen: boolean; kind?: Kind }>({ offen: false });
@@ -62,12 +60,18 @@ export function Sidebar({
             aria-label="Kind suchen"
           />
         </div>
-        <button
-          className="btn-primary mt-2 w-full"
-          onClick={() => setKindModal({ offen: true })}
-        >
-          <IconPlus width={18} height={18} /> Kind anlegen
-        </button>
+        <div className="mt-2 flex gap-2">
+          <button className="btn-primary flex-1" onClick={() => setKindModal({ offen: true })}>
+            <IconPlus width={18} height={18} /> Kind anlegen
+          </button>
+          <button
+            className="btn-secondary shrink-0"
+            onClick={() => setKlassenModal(true)}
+            title="Klassen verwalten"
+          >
+            <IconUsers width={18} height={18} />
+          </button>
+        </div>
       </div>
 
       <nav className="mt-3 flex-1 overflow-y-auto px-2 pb-2">
@@ -124,21 +128,15 @@ export function Sidebar({
       </nav>
 
       <div className="border-t border-paper-200 p-2">
-        <button className="btn-ghost w-full justify-start" onClick={() => setKlassenModal(true)}>
-          <IconUsers width={18} height={18} /> Klassen verwalten
-        </button>
         <button
           className="btn-ghost w-full justify-start"
           onClick={() => {
             setSchluesselDruck(true);
-            setTimeout(() => window.print(), 60);
+            setTimeout(() => drucke(), 60);
           }}
           title="Zuordnung Kürzel ↔ Klarname zum Ausdrucken (offline aufbewahren)"
         >
           <IconKey width={18} height={18} /> Namensschlüssel drucken
-        </button>
-        <button className="btn-ghost w-full justify-start" onClick={onOpenSettings}>
-          <IconSettings width={18} height={18} /> {t.nav.einstellungen}
         </button>
       </div>
 

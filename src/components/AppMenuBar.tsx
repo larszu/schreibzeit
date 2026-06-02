@@ -3,7 +3,8 @@
 // Leiste übernimmt die Funktionen.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Modal } from './ui';
-import { IconBook } from './icons';
+import { IconBook, IconSettings } from './icons';
+import { useUiStore } from '@/state/store';
 import { oeffnen, speichern, speichernUnter } from '@/services/fileSystem';
 
 const VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0';
@@ -67,6 +68,7 @@ function MenuItem({
 export function AppMenuBar() {
   const [aboutOffen, setAboutOffen] = useState(false);
   const [meldung, setMeldung] = useState<string | null>(null);
+  const setEinstellungenOffen = useUiStore((s) => s.setEinstellungenOffen);
   const istMac = typeof window !== 'undefined' && window.schreibzeit?.plattform === 'darwin';
   const mod = istMac ? '⌘' : 'Strg';
 
@@ -167,6 +169,15 @@ export function AppMenuBar() {
           {meldung}
         </span>
       )}
+
+      <button
+        className="ml-auto flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium text-ink-soft hover:bg-paper-200 hover:text-ink"
+        onClick={() => setEinstellungenOffen(true)}
+        title="Einstellungen"
+      >
+        <IconSettings width={16} height={16} />
+        <span className="hidden sm:inline">Einstellungen</span>
+      </button>
 
       <Modal offen={aboutOffen} titel="Über Schreibzeit" onClose={() => setAboutOffen(false)}>
         <div className="flex flex-col items-center text-center">

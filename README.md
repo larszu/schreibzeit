@@ -58,16 +58,21 @@ Sie brauchen **nichts zu installieren, was Adminrechte erfordert**, und keine Pr
 2. Die `.dmg` öffnen und **Schreibzeit** in den Ordner **„Programme"** ziehen.
 3. Beim ersten Start: **Rechtsklick auf das Programm → „Öffnen"** (einmalig, da die App nicht aus dem App Store kommt).
 
-### C) Web-Version (nur für gehostete Nutzung)
+### C) Web-Version – als klickbaren Link bereitstellen (GitHub Pages)
 
-Die im Release enthaltene Datei **`Schreibzeit-Web-….zip`** ist **nicht zum Doppelklicken** gedacht.
-Sie enthält die fertige Web-App und ist für die **Bereitstellung auf einem Webserver** vorgesehen
-(z. B. durch die Schul-IT oder über GitHub Pages). Erst über eine so bereitgestellte
-**Internet-/Intranet-Adresse** lässt sich die App im Browser öffnen und dort über das Browser-Menü
-**„Installieren"/„Zum Startbildschirm hinzufügen"** als App ablegen (läuft danach offline).
+Die App lässt sich mit einem Klick als Webseite veröffentlichen:
 
-➡️ **Für ein einzelnes Gerät ohne Server ist A) (Windows-Portable) bzw. B) (Mac) der richtige Weg** –
-da ist kein Hosting nötig.
+1. Im Repository **Settings → Pages → Source: „GitHub Actions"** auswählen (einmalig).
+2. Der enthaltene Workflow **„Web-Version veröffentlichen"** baut und veröffentlicht die App bei
+   jedem Push auf `main` automatisch.
+3. Danach ist sie unter **`https://<benutzer>.github.io/schreibzeit/`** (hier:
+   `https://larszu.github.io/schreibzeit/`) **klickbar** erreichbar – einfach den Link teilen.
+4. Im Browser über **„Installieren"/„Zum Startbildschirm hinzufügen"** wird daraus eine App, die
+   danach **offline** läuft.
+
+> Die Release-Datei **`Schreibzeit-Web-….zip`** ist hingegen **nicht zum Doppelklicken** – sie ist
+> nur für eigenes Hosting (z. B. Schul-Intranet). Für ein einzelnes Gerät ohne Server ist
+> **A) Windows-Portable** bzw. **B) Mac** der einfachste Weg.
 
 
 

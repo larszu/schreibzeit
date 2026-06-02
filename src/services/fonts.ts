@@ -25,8 +25,28 @@ function registriere(f: FontEintrag): void {
   }
 }
 
-/** Registriert alle gespeicherten Schriften (beim App-Start). */
+// Mitgelieferte, freie Grundschul-Schrift „Andika" (SIL OFL). Per FontFace
+// registriert, damit der Pfad unabhängig vom Hosting-Basepfad funktioniert.
+let andikaRegistriert = false;
+function registriereAndika(): void {
+  if (andikaRegistriert || typeof FontFace === 'undefined') return;
+  andikaRegistriert = true;
+  const base = import.meta.env.BASE_URL;
+  const faces = [
+    new FontFace('Andika', `url(${base}fonts/Andika-Regular.woff2)`, { weight: '400' }),
+    new FontFace('Andika', `url(${base}fonts/Andika-Bold.woff2)`, { weight: '700' }),
+  ];
+  for (const face of faces) {
+    void face
+      .load()
+      .then((geladen) => document.fonts.add(geladen))
+      .catch(() => {});
+  }
+}
+
+/** Registriert die mitgelieferte und alle gespeicherten Schriften (beim App-Start). */
 export async function registriereAlleFonts(): Promise<void> {
+  registriereAndika();
   const fonts = await db.fonts.toArray();
   fonts.forEach(registriere);
 }

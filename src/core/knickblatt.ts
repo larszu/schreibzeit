@@ -127,6 +127,7 @@ export function createDefaultKnickblattConfig(
     spalten: defaultKnickspalten(),
     woerterProBlatt: 10,
     lineatur: 'klasse2',
+    vorlageFont: 'Andika',
     vorlageMitSilben: false,
     vorlageMitMerkstellen: false,
     ...partial,
@@ -189,19 +190,17 @@ export const LINEATUR_LABEL: Record<Lineatur, string> = {
   haus: 'Haus-Lineatur (Mittelband)',
 };
 
-/** Ermittelt die Maße einer Lineatur (eingebaut oder eigene). */
-export function resolveLineatur(id: string, custom: CustomLineatur[] = []): LineaturMasse {
-  if (id in LINEATUR_MASSE) return LINEATUR_MASSE[id as Lineatur];
+/** Render-Beschreibung einer Lineatur: gezeichnete Linien oder ein Bildstreifen. */
+export type LineaturRender =
+  | { typ: 'parametrisch'; masse: LineaturMasse }
+  | { typ: 'bild'; url: string; hoeheMm: number };
+
+/** Ermittelt, wie eine Lineatur gezeichnet wird (eingebaut = Linien, eigene = Bild). */
+export function resolveLineaturRender(id: string, custom: CustomLineatur[] = []): LineaturRender {
+  if (id in LINEATUR_MASSE) return { typ: 'parametrisch', masse: LINEATUR_MASSE[id as Lineatur] };
   const eigen = custom.find((c) => c.id === id);
-  if (eigen) {
-    return {
-      oberHoehe: eigen.oberHoehe,
-      bandHoehe: eigen.bandHoehe,
-      unterHoehe: eigen.unterHoehe,
-      mittelbandFarbig: eigen.mittelbandFarbig,
-    };
-  }
-  return LINEATUR_MASSE.klasse2;
+  if (eigen) return { typ: 'bild', url: eigen.bildUrl, hoeheMm: eigen.hoeheMm };
+  return { typ: 'parametrisch', masse: LINEATUR_MASSE.klasse2 };
 }
 
 export function lineaturGesamtHoehe(l: LineaturMasse): number {

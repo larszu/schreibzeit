@@ -6,7 +6,7 @@ import {
   LINEATUR_MASSE,
   lineaturGesamtHoehe,
   paginate,
-  resolveLineatur,
+  resolveLineaturRender,
 } from '@/core/knickblatt';
 import type { Lernwort } from '@/types';
 
@@ -80,24 +80,27 @@ describe('Lineatur', () => {
   });
 });
 
-describe('resolveLineatur', () => {
-  it('liefert eingebaute Lineaturen', () => {
-    expect(resolveLineatur('klasse1')).toEqual(LINEATUR_MASSE.klasse1);
+describe('resolveLineaturRender', () => {
+  it('liefert eingebaute Lineaturen als gezeichnete Linien', () => {
+    expect(resolveLineaturRender('klasse1')).toEqual({
+      typ: 'parametrisch',
+      masse: LINEATUR_MASSE.klasse1,
+    });
   });
 
   it('fällt für unbekannte IDs auf klasse2 zurück', () => {
-    expect(resolveLineatur('gibtsnicht')).toEqual(LINEATUR_MASSE.klasse2);
+    expect(resolveLineaturRender('gibtsnicht')).toEqual({
+      typ: 'parametrisch',
+      masse: LINEATUR_MASSE.klasse2,
+    });
   });
 
-  it('löst eigene Lineaturen auf', () => {
-    const custom = [
-      { id: 'c1', name: 'Meine', oberHoehe: 3, bandHoehe: 9, unterHoehe: 3, mittelbandFarbig: true },
-    ];
-    expect(resolveLineatur('c1', custom)).toEqual({
-      oberHoehe: 3,
-      bandHoehe: 9,
-      unterHoehe: 3,
-      mittelbandFarbig: true,
+  it('löst eigene (Bild-)Lineaturen auf', () => {
+    const custom = [{ id: 'c1', name: 'Meine', bildUrl: 'data:image/png;base64,xx', hoeheMm: 9 }];
+    expect(resolveLineaturRender('c1', custom)).toEqual({
+      typ: 'bild',
+      url: 'data:image/png;base64,xx',
+      hoeheMm: 9,
     });
   });
 });

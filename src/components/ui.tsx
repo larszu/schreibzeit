@@ -56,6 +56,36 @@ export function Modal({
   );
 }
 
+export function Accordion({
+  titel,
+  beschreibung,
+  defaultOpen,
+  children,
+}: {
+  titel: string;
+  beschreibung?: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <details
+      className="group rounded-lg border border-paper-200 bg-white open:shadow-soft"
+      open={defaultOpen}
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3">
+        <div>
+          <span className="font-serif font-semibold text-ink">{titel}</span>
+          {beschreibung && <p className="text-xs text-ink-faint">{beschreibung}</p>}
+        </div>
+        <span className="text-ink-faint transition-transform group-open:rotate-90" aria-hidden>
+          ›
+        </span>
+      </summary>
+      <div className="border-t border-paper-200 px-4 py-4">{children}</div>
+    </details>
+  );
+}
+
 export function StatusBadge({ status }: { status: 'neu' | 'wird_geuebt' | 'sitzt' }) {
   const map = {
     neu: { label: 'neu', cls: 'bg-paper-200 text-ink-soft' },

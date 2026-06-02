@@ -1,7 +1,8 @@
 // Grundschul-Schreiblinien (Lineatur) – exakt in Millimetern für sauberen
-// Druck. Eine „Schreiblinie" besteht aus Oberlinie, Mittellinie, Grundlinie
-// und Unterlinie; das Mittelband kann (Haus-Lineatur) farbig hinterlegt sein.
+// Druck. Eingebaute Lineaturen werden als Linien gezeichnet; eigene Lineaturen
+// sind ein zugeschnittener Bildstreifen.
 import type { LineaturMasse } from '@/types';
+import type { LineaturRender } from '@/core/knickblatt';
 
 const LINIE_FARBE = '#9aa0a6';
 const GRUNDLINIE_FARBE = '#5b6066';
@@ -22,8 +23,7 @@ function Linie({ top, stark }: { top: number; stark?: boolean }) {
   );
 }
 
-/** Eine einzelne Schreibzeile in der gewählten Lineatur. */
-export function Schreiblinie({ masse }: { masse: LineaturMasse }) {
+function ParametrischeLinie({ masse }: { masse: LineaturMasse }) {
   const m = masse;
   const total = m.oberHoehe + m.bandHoehe + m.unterHoehe;
   return (
@@ -48,12 +48,30 @@ export function Schreiblinie({ masse }: { masse: LineaturMasse }) {
   );
 }
 
+/** Eine einzelne Schreibzeile (gezeichnet oder als Bildstreifen). */
+export function Schreiblinie({ render }: { render: LineaturRender }) {
+  if (render.typ === 'bild') {
+    return (
+      <div
+        style={{
+          width: '100%',
+          height: `${render.hoeheMm}mm`,
+          backgroundImage: `url(${render.url})`,
+          backgroundSize: '100% 100%',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
+    );
+  }
+  return <ParametrischeLinie masse={render.masse} />;
+}
+
 /** Mehrere Schreibzeilen übereinander mit etwas Abstand. */
-export function Schreiblinien({ masse, anzahl = 1 }: { masse: LineaturMasse; anzahl?: number }) {
+export function Schreiblinien({ render, anzahl = 1 }: { render: LineaturRender; anzahl?: number }) {
   return (
     <div className="flex flex-col gap-[3mm] py-[1.5mm]">
       {Array.from({ length: anzahl }, (_, i) => (
-        <Schreiblinie key={i} masse={masse} />
+        <Schreiblinie key={i} render={render} />
       ))}
     </div>
   );

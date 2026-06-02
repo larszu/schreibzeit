@@ -15,14 +15,17 @@ import { suggestMerkstellen } from '@/core/merkstellen';
 import { tokenize, buildExistingSet, normalizeForCompare } from '@/core/tokenize';
 import { formatSyllables } from '@/core/syllables';
 import { lookupWort, woerterbuchSilben } from '@/services/dictionary';
+import { uebernehmeWort, uebernehmeWoerter } from '@/services/lernwortHelfer';
 import { erkenneTextAusFoto } from '@/services/ocr';
 import { sprichWort, ttsVerfuegbar } from '@/services/tts';
 import { GRUNDWORTSCHATZ_LISTEN, ladeGrundwortschatz } from '@/data/grundwortschatz';
 import { IconCamera, IconSpeaker, IconList, IconBook } from '@/components/icons';
+import { WortChips } from '@/components/WortChips';
 import { PrintPortal } from '@/components/print/PrintPortal';
 import { LernstandDocument } from '@/components/print/LernstandDocument';
 import { displayName } from '@/state/store';
 import { t } from '@/i18n/de';
+import { drucke } from '@/services/print';
 import type { Einstellungen, Kind, Lernwort, WortStatus } from '@/types';
 
 const TTS_OK = ttsVerfuegbar();
@@ -85,7 +88,7 @@ export function KarteiView({
             className="btn-ghost"
             onClick={() => {
               setUebersichtDruck(true);
-              setTimeout(() => window.print(), 60);
+              setTimeout(() => drucke(), 60);
             }}
             title="Lernstands-Übersicht drucken"
           >
@@ -579,6 +582,8 @@ function TextExtraktor({
   const [hinzugefuegt, setHinzugefuegt] = useState<Set<string>>(new Set());
   const [ocrLaden, setOcrLaden] = useState(false);
   const [ocrInfo, setOcrInfo] = useState<string | null>(null);
+  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
+  const [fotoGross, setFotoGross] = useState(false);
   const fotoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -586,6 +591,8 @@ function TextExtraktor({
       setText('');
       setHinzugefuegt(new Set());
       setOcrInfo(null);
+      setFotoUrl(null);
+      setFotoGross(false);
     }
   }, [offen]);
 
@@ -595,15 +602,9 @@ function TextExtraktor({
     [vorhandene],
   );
 
-  async function uebernehmen(token: { wort: string; key: string }) {
-    const info = lookupWort(token.wort);
-    await repository.addLernwort(kind.id, token.wort, {
-      quelle: 'Text-Extraktion',
-      silben: info.silben,
-      merkstellen: info.merkstellen,
-      artikel: info.artikel || '',
-    });
-    setHinzugefuegt((alt) => new Set(alt).add(normalizeForCompare(token.wort)));
+  async function uebernehmen(wort: string) {
+    await uebernehmeWort(kind.id, wort, 'Text-Extraktion');
+    setHinzugefuegt((alt) => new Set(alt).add(normalizeForCompare(wort)));
   }
 
   // Offene (noch nicht vorhandene) Wörter der Tokenliste, ohne Dubletten.
@@ -621,15 +622,7 @@ function TextExtraktor({
 
   async function alleUebernehmen() {
     const woerter = offeneWoerter;
-    for (const w of woerter) {
-      const info = lookupWort(w);
-      await repository.addLernwort(kind.id, w, {
-        quelle: 'Text-Extraktion',
-        silben: info.silben,
-        merkstellen: info.merkstellen,
-        artikel: info.artikel || '',
-      });
-    }
+    await uebernehmeWoerter(kind.id, woerter, 'Text-Extraktion');
     setHinzugefuegt((alt) => {
       const s = new Set(alt);
       woerter.forEach((w) => s.add(normalizeForCompare(w)));
@@ -638,6 +631,11 @@ function TextExtraktor({
   }
 
   async function fotoGewaehlt(file: File) {
+    // Vorschau erzeugen (vorherige URL freigeben)
+    setFotoUrl((alt) => {
+      if (alt) URL.revokeObjectURL(alt);
+      return URL.createObjectURL(file);
+    });
     setOcrLaden(true);
     setOcrInfo(null);
     try {
@@ -679,8 +677,41 @@ function TextExtraktor({
             <IconCamera width={18} height={18} />
             {ocrLaden ? 'Text wird erkannt …' : 'Foto hochladen (Texterkennung)'}
           </button>
+          {fotoUrl && (
+            <button
+              type="button"
+              onClick={() => setFotoGross(true)}
+              className="group relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-paper-300"
+              title="Foto groß anzeigen"
+            >
+              <img src={fotoUrl} alt="Hochgeladenes Foto" className="h-full w-full object-cover" />
+              <span className="absolute inset-0 hidden items-center justify-center bg-ink/40 text-[10px] font-medium text-white group-hover:flex">
+                Groß
+              </span>
+            </button>
+          )}
           {ocrInfo && <span className="text-xs text-ink-soft">{ocrInfo}</span>}
         </div>
+        {fotoGross && fotoUrl && (
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/80 p-6"
+            onClick={() => setFotoGross(false)}
+            role="dialog"
+            aria-label="Foto-Vollansicht"
+          >
+            <img
+              src={fotoUrl}
+              alt="Hochgeladenes Foto (groß)"
+              className="max-h-full max-w-full rounded-lg shadow-card"
+            />
+            <button
+              className="absolute right-4 top-4 rounded-md bg-white/90 px-3 py-1.5 text-sm font-medium text-ink"
+              onClick={() => setFotoGross(false)}
+            >
+              Schließen
+            </button>
+          </div>
+        )}
         <textarea
           className="input min-h-[120px] font-serif"
           placeholder="Text hier einfügen oder per Foto erkennen lassen …"
@@ -700,28 +731,14 @@ function TextExtraktor({
                 </button>
               )}
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {tokens.map((token) => {
-                const norm = normalizeForCompare(token.wort);
-                const schonDa = existierende.has(norm) || hinzugefuegt.has(norm);
-                return (
-                  <button
-                    key={token.key}
-                    onClick={() => uebernehmen(token)}
-                    disabled={schonDa}
-                    className={`rounded-md px-2 py-1 font-serif text-sm transition-colors ${
-                      schonDa
-                        ? 'cursor-default bg-brand-100 text-brand-700'
-                        : 'bg-white text-ink shadow-sm hover:bg-brand-500 hover:text-white'
-                    }`}
-                    title={schonDa ? 'Bereits in der Kartei' : 'Als Lernwort übernehmen'}
-                  >
-                    {schonDa && <IconCheck width={12} height={12} className="mr-1 inline" />}
-                    {token.wort}
-                  </button>
-                );
-              })}
-            </div>
+            <WortChips
+              items={tokens}
+              istVorhanden={(w) => {
+                const n = normalizeForCompare(w);
+                return existierende.has(n) || hinzugefuegt.has(n);
+              }}
+              onAdd={uebernehmen}
+            />
           </div>
         )}
         <div className="flex justify-end">
@@ -777,27 +794,13 @@ function GrundwortschatzModal({
   );
 
   async function uebernehmen(w: string) {
-    const info = lookupWort(w);
-    await repository.addLernwort(kind.id, w, {
-      quelle: 'Grundwortschatz',
-      silben: info.silben,
-      merkstellen: info.merkstellen,
-      artikel: info.artikel || '',
-    });
+    await uebernehmeWort(kind.id, w, 'Grundwortschatz');
     setHinzugefuegt((alt) => new Set(alt).add(normalizeForCompare(w)));
   }
 
   async function alleUebernehmen() {
     const liste = offene;
-    for (const w of liste) {
-      const info = lookupWort(w);
-      await repository.addLernwort(kind.id, w, {
-        quelle: 'Grundwortschatz',
-        silben: info.silben,
-        merkstellen: info.merkstellen,
-        artikel: info.artikel || '',
-      });
-    }
+    await uebernehmeWoerter(kind.id, liste, 'Grundwortschatz');
     setHinzugefuegt((alt) => {
       const s = new Set(alt);
       liste.forEach((w) => s.add(normalizeForCompare(w)));
@@ -830,28 +833,14 @@ function GrundwortschatzModal({
           {woerter.length} Wörter · bereits in der Kartei vorhandene sind markiert.
         </p>
         <div className="max-h-[50vh] overflow-y-auto rounded-lg border border-paper-200 bg-paper-50 p-3">
-          <div className="flex flex-wrap gap-1.5">
-            {woerter.map((w) => {
+          <WortChips
+            items={woerter.map((w) => ({ wort: w, key: w }))}
+            istVorhanden={(w) => {
               const n = normalizeForCompare(w);
-              const schonDa = existierende.has(n) || hinzugefuegt.has(n);
-              return (
-                <button
-                  key={w}
-                  onClick={() => uebernehmen(w)}
-                  disabled={schonDa}
-                  className={`rounded-md px-2 py-1 font-serif text-sm transition-colors ${
-                    schonDa
-                      ? 'cursor-default bg-brand-100 text-brand-700'
-                      : 'bg-white text-ink shadow-sm hover:bg-brand-500 hover:text-white'
-                  }`}
-                  title={schonDa ? 'Bereits in der Kartei' : 'Übernehmen'}
-                >
-                  {schonDa && <IconCheck width={12} height={12} className="mr-1 inline" />}
-                  {w}
-                </button>
-              );
-            })}
-          </div>
+              return existierende.has(n) || hinzugefuegt.has(n);
+            }}
+            onAdd={uebernehmen}
+          />
         </div>
         <div className="flex justify-end">
           <button className="btn-primary" onClick={onClose}>

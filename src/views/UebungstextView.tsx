@@ -8,6 +8,7 @@ import { repository } from '@/db/repository';
 import { useLernwoerter, useUebungstexte } from '@/state/hooks';
 import { displayName } from '@/state/store';
 import { t } from '@/i18n/de';
+import { drucke } from '@/services/print';
 import type { Einstellungen, Kind, TextArt, Uebungstext } from '@/types';
 
 const TEXTARTEN: TextArt[] = ['geschichte', 'lueckentext', 'quatschsaetze'];
@@ -101,10 +102,10 @@ export function UebungstextView({
     setErgebnis(null);
   }
 
-  function drucke(text: Uebungstext) {
+  function druckeText(text: Uebungstext) {
     setDruckText(text);
-    // Nach dem Rendern des Druckbereichs den Druckdialog öffnen.
-    setTimeout(() => window.print(), 60);
+    // Nach dem Rendern des Druckbereichs den Druck auslösen.
+    setTimeout(() => drucke(), 60);
   }
 
   if (woerter.length === 0) {
@@ -260,7 +261,7 @@ export function UebungstextView({
               </p>
             )}
             <div className="mt-3 flex justify-end gap-2">
-              <button className="btn-secondary" onClick={() => drucke(ergebnis)}>
+              <button className="btn-secondary" onClick={() => druckeText(ergebnis)}>
                 <IconPrint width={18} height={18} /> {t.common.drucken}
               </button>
               <button className="btn-primary" onClick={speichern}>
@@ -277,7 +278,7 @@ export function UebungstextView({
           ) : (
             <ul className="space-y-2">
               {gespeicherte.map((text) => (
-                <GespeicherterText key={text.id} text={text} onDruck={() => drucke(text)} />
+                <GespeicherterText key={text.id} text={text} onDruck={() => druckeText(text)} />
               ))}
             </ul>
           )}

@@ -84,10 +84,17 @@ export interface LineaturMasse {
   mittelbandFarbig: boolean;
 }
 
-/** Selbst angelegte Lineatur (zusätzlich zu den eingebauten). */
-export interface CustomLineatur extends LineaturMasse {
+/**
+ * Selbst angelegte Lineatur: ein aus einem Foto/Bild zugeschnittener Streifen,
+ * der als Schreiblinie verwendet wird.
+ */
+export interface CustomLineatur {
   id: string;
   name: string;
+  /** Zugeschnittenes Bild als Data-URL. */
+  bildUrl: string;
+  /** Druckhöhe einer Zeile in Millimetern. */
+  hoeheMm: number;
 }
 
 /** Selbst hinzugefügte Schriftart (Datei liegt in der `fonts`-Tabelle). */
