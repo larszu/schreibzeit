@@ -5,9 +5,12 @@
 // umzubauen (siehe SPALTEN_DEFS).
 
 import type {
+  CustomLineatur,
   KnickblattConfig,
   Knickspalte,
   Lernwort,
+  Lineatur,
+  LineaturMasse,
   SpaltenTyp,
 } from '@/types';
 
@@ -157,29 +160,49 @@ export function activeSpalten(config: KnickblattConfig): Array<Knickspalte & Spa
     .filter((s) => s.aktiv)
     .map((s) => {
       const def = SPALTEN_DEFS[s.typ];
-      // Eigener Titel überschreibt den Standardtitel (falls gesetzt).
-      return { ...def, ...s, titel: s.titel?.trim() || def.titel };
+      // Eigener Titel/Symbol überschreibt die Standardwerte (falls gesetzt).
+      return {
+        ...def,
+        ...s,
+        titel: s.titel?.trim() || def.titel,
+        symbol: s.symbol?.trim() || def.symbol,
+      };
     });
 }
 
 // Lineatur-Maße in Millimetern (Grundschul-Schreiblinien mit Mittelband).
 // `bandHoehe` = Höhe des Mittelbands (x-Höhe), `oberHoehe`/`unterHoehe` =
 // Ober-/Unterlänge. Werte sinken mit steigender Klassenstufe.
-export interface LineaturMasse {
-  oberHoehe: number;
-  bandHoehe: number;
-  unterHoehe: number;
-  /** Mittelband farbig hinterlegen (Haus-Lineatur). */
-  mittelbandFarbig: boolean;
-}
-
-export const LINEATUR_MASSE: Record<KnickblattConfig['lineatur'], LineaturMasse> = {
+export const LINEATUR_MASSE: Record<Lineatur, LineaturMasse> = {
   klasse1: { oberHoehe: 5, bandHoehe: 10, unterHoehe: 5, mittelbandFarbig: false },
   klasse2: { oberHoehe: 4, bandHoehe: 8, unterHoehe: 4, mittelbandFarbig: false },
   klasse3: { oberHoehe: 3, bandHoehe: 6, unterHoehe: 3, mittelbandFarbig: false },
   klasse4: { oberHoehe: 2.5, bandHoehe: 5, unterHoehe: 2.5, mittelbandFarbig: false },
   haus: { oberHoehe: 4, bandHoehe: 8, unterHoehe: 4, mittelbandFarbig: true },
 };
+
+export const LINEATUR_LABEL: Record<Lineatur, string> = {
+  klasse1: 'Lineatur Klasse 1',
+  klasse2: 'Lineatur Klasse 2',
+  klasse3: 'Lineatur Klasse 3',
+  klasse4: 'Lineatur Klasse 4',
+  haus: 'Haus-Lineatur (Mittelband)',
+};
+
+/** Ermittelt die Maße einer Lineatur (eingebaut oder eigene). */
+export function resolveLineatur(id: string, custom: CustomLineatur[] = []): LineaturMasse {
+  if (id in LINEATUR_MASSE) return LINEATUR_MASSE[id as Lineatur];
+  const eigen = custom.find((c) => c.id === id);
+  if (eigen) {
+    return {
+      oberHoehe: eigen.oberHoehe,
+      bandHoehe: eigen.bandHoehe,
+      unterHoehe: eigen.unterHoehe,
+      mittelbandFarbig: eigen.mittelbandFarbig,
+    };
+  }
+  return LINEATUR_MASSE.klasse2;
+}
 
 export function lineaturGesamtHoehe(l: LineaturMasse): number {
   return l.oberHoehe + l.bandHoehe + l.unterHoehe;

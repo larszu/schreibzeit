@@ -6,6 +6,7 @@ import {
   LINEATUR_MASSE,
   lineaturGesamtHoehe,
   paginate,
+  resolveLineatur,
 } from '@/core/knickblatt';
 import type { Lernwort } from '@/types';
 
@@ -76,5 +77,39 @@ describe('Lineatur', () => {
     expect(lineaturGesamtHoehe(LINEATUR_MASSE.klasse1)).toBeGreaterThan(
       lineaturGesamtHoehe(LINEATUR_MASSE.klasse4),
     );
+  });
+});
+
+describe('resolveLineatur', () => {
+  it('liefert eingebaute Lineaturen', () => {
+    expect(resolveLineatur('klasse1')).toEqual(LINEATUR_MASSE.klasse1);
+  });
+
+  it('fällt für unbekannte IDs auf klasse2 zurück', () => {
+    expect(resolveLineatur('gibtsnicht')).toEqual(LINEATUR_MASSE.klasse2);
+  });
+
+  it('löst eigene Lineaturen auf', () => {
+    const custom = [
+      { id: 'c1', name: 'Meine', oberHoehe: 3, bandHoehe: 9, unterHoehe: 3, mittelbandFarbig: true },
+    ];
+    expect(resolveLineatur('c1', custom)).toEqual({
+      oberHoehe: 3,
+      bandHoehe: 9,
+      unterHoehe: 3,
+      mittelbandFarbig: true,
+    });
+  });
+});
+
+describe('activeSpalten – Titel/Symbol-Überschreibung', () => {
+  it('verwendet eigene Titel und Symbole, sonst Standard', () => {
+    const c = createDefaultKnickblattConfig();
+    c.spalten[1] = { ...c.spalten[1], titel: 'Eigen', symbol: '★' };
+    const aktiv = activeSpalten(c);
+    expect(aktiv[1].titel).toBe('Eigen');
+    expect(aktiv[1].symbol).toBe('★');
+    // Vorlage unverändert (Standardsymbol)
+    expect(aktiv[0].titel).toBe('Lernwort');
   });
 });

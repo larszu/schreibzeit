@@ -1,9 +1,9 @@
 // Druckdokument „Knickblatt" – DIN A4 quer. Zeilen = Lernwörter,
 // Spalten = Übungsstrategien. Datengetrieben aus KnickblattConfig.
-import { activeSpalten, paginate } from '@/core/knickblatt';
+import { activeSpalten, paginate, resolveLineatur } from '@/core/knickblatt';
 import { Schreiblinie } from './Schreiblinie';
 import { WortAnzeige } from './WortAnzeige';
-import type { KnickblattConfig, Lernwort } from '@/types';
+import type { KnickblattConfig, Lernwort, LineaturMasse } from '@/types';
 
 export interface KnickblattKopf {
   kindName: string;
@@ -18,13 +18,16 @@ export function KnickblattDocument({
   woerter,
   config,
   kopf,
+  lineaturMasse,
 }: {
   woerter: Lernwort[];
   config: KnickblattConfig;
   kopf: KnickblattKopf;
+  lineaturMasse?: LineaturMasse;
 }) {
   const spalten = activeSpalten(config);
   const seiten = paginate(woerter, config.woerterProBlatt);
+  const masse = lineaturMasse ?? resolveLineatur(config.lineatur);
 
   return (
     <>
@@ -80,9 +83,10 @@ export function KnickblattDocument({
                           mitMerkstellen={config.vorlageMitMerkstellen}
                           artikel={w.artikel || undefined}
                           groesse={22}
+                          fontFamily={config.vorlageFont}
                         />
                       ) : (
-                        <Schreiblinie lineatur={config.lineatur} />
+                        <Schreiblinie masse={masse} />
                       )}
                     </td>
                   ))}

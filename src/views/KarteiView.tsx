@@ -17,7 +17,8 @@ import { formatSyllables } from '@/core/syllables';
 import { lookupWort, woerterbuchSilben } from '@/services/dictionary';
 import { erkenneTextAusFoto } from '@/services/ocr';
 import { sprichWort, ttsVerfuegbar } from '@/services/tts';
-import { IconCamera, IconSpeaker, IconList } from '@/components/icons';
+import { GRUNDWORTSCHATZ_LISTEN, ladeGrundwortschatz } from '@/data/grundwortschatz';
+import { IconCamera, IconSpeaker, IconList, IconBook } from '@/components/icons';
 import { PrintPortal } from '@/components/print/PrintPortal';
 import { LernstandDocument } from '@/components/print/LernstandDocument';
 import { displayName } from '@/state/store';
@@ -39,6 +40,7 @@ export function KarteiView({
   const [filter, setFilter] = useState<WortStatus | 'alle'>('alle');
   const [editor, setEditor] = useState<{ offen: boolean; wort?: Lernwort }>({ offen: false });
   const [extraktorOffen, setExtraktorOffen] = useState(false);
+  const [gwsOffen, setGwsOffen] = useState(false);
   const [auswahl, setAuswahl] = useState<Set<string>>(new Set());
   const [uebersichtDruck, setUebersichtDruck] = useState(false);
 
@@ -74,6 +76,9 @@ export function KarteiView({
         </button>
         <button className="btn-secondary" onClick={() => setExtraktorOffen(true)}>
           <IconSparkles width={18} height={18} /> Aus Text herauspicken
+        </button>
+        <button className="btn-secondary" onClick={() => setGwsOffen(true)}>
+          <IconBook width={18} height={18} /> Aus Grundwortschatz
         </button>
         {woerter.length > 0 && (
           <button
@@ -154,6 +159,13 @@ export function KarteiView({
         einstellungen={einstellungen}
         vorhandene={woerter}
         onClose={() => setExtraktorOffen(false)}
+      />
+      <GrundwortschatzModal
+        offen={gwsOffen}
+        kind={kind}
+        einstellungen={einstellungen}
+        vorhandene={woerter}
+        onClose={() => setGwsOffen(false)}
       />
 
       {uebersichtDruck && (
@@ -712,6 +724,135 @@ function TextExtraktor({
             </div>
           </div>
         )}
+        <div className="flex justify-end">
+          <button className="btn-primary" onClick={onClose}>
+            Fertig
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function GrundwortschatzModal({
+  offen,
+  kind,
+  einstellungen,
+  vorhandene,
+  onClose,
+}: {
+  offen: boolean;
+  kind: Kind;
+  einstellungen: Einstellungen;
+  vorhandene: Lernwort[];
+  onClose: () => void;
+}) {
+  const [listeId, setListeId] = useState('');
+  const [woerter, setWoerter] = useState<string[]>([]);
+  const [hinzugefuegt, setHinzugefuegt] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (offen) {
+      setHinzugefuegt(new Set());
+      setListeId(einstellungen.grundwortschatzId || GRUNDWORTSCHATZ_LISTEN[0].id);
+    }
+  }, [offen, einstellungen.grundwortschatzId]);
+
+  useEffect(() => {
+    if (offen && listeId) void ladeGrundwortschatz(listeId).then(setWoerter);
+  }, [offen, listeId]);
+
+  const existierende = useMemo(
+    () => buildExistingSet(vorhandene.map((w) => w.wort)),
+    [vorhandene],
+  );
+
+  const offene = useMemo(
+    () =>
+      woerter.filter((w) => {
+        const n = normalizeForCompare(w);
+        return !existierende.has(n) && !hinzugefuegt.has(n);
+      }),
+    [woerter, existierende, hinzugefuegt],
+  );
+
+  async function uebernehmen(w: string) {
+    const info = lookupWort(w);
+    await repository.addLernwort(kind.id, w, {
+      quelle: 'Grundwortschatz',
+      silben: info.silben,
+      merkstellen: info.merkstellen,
+      artikel: info.artikel || '',
+    });
+    setHinzugefuegt((alt) => new Set(alt).add(normalizeForCompare(w)));
+  }
+
+  async function alleUebernehmen() {
+    const liste = offene;
+    for (const w of liste) {
+      const info = lookupWort(w);
+      await repository.addLernwort(kind.id, w, {
+        quelle: 'Grundwortschatz',
+        silben: info.silben,
+        merkstellen: info.merkstellen,
+        artikel: info.artikel || '',
+      });
+    }
+    setHinzugefuegt((alt) => {
+      const s = new Set(alt);
+      liste.forEach((w) => s.add(normalizeForCompare(w)));
+      return s;
+    });
+  }
+
+  return (
+    <Modal offen={offen} titel="Aus Grundwortschatz hinzufügen" onClose={onClose} weit>
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            className="input max-w-xs"
+            value={listeId}
+            onChange={(e) => setListeId(e.target.value)}
+          >
+            {GRUNDWORTSCHATZ_LISTEN.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.label}
+              </option>
+            ))}
+          </select>
+          {offene.length > 0 && (
+            <button className="btn-secondary" onClick={alleUebernehmen}>
+              <IconCheck width={16} height={16} /> Alle übernehmen ({offene.length})
+            </button>
+          )}
+        </div>
+        <p className="text-sm text-ink-soft">
+          {woerter.length} Wörter · bereits in der Kartei vorhandene sind markiert.
+        </p>
+        <div className="max-h-[50vh] overflow-y-auto rounded-lg border border-paper-200 bg-paper-50 p-3">
+          <div className="flex flex-wrap gap-1.5">
+            {woerter.map((w) => {
+              const n = normalizeForCompare(w);
+              const schonDa = existierende.has(n) || hinzugefuegt.has(n);
+              return (
+                <button
+                  key={w}
+                  onClick={() => uebernehmen(w)}
+                  disabled={schonDa}
+                  className={`rounded-md px-2 py-1 font-serif text-sm transition-colors ${
+                    schonDa
+                      ? 'cursor-default bg-brand-100 text-brand-700'
+                      : 'bg-white text-ink shadow-sm hover:bg-brand-500 hover:text-white'
+                  }`}
+                  title={schonDa ? 'Bereits in der Kartei' : 'Übernehmen'}
+                >
+                  {schonDa && <IconCheck width={12} height={12} className="mr-1 inline" />}
+                  {w}
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <div className="flex justify-end">
           <button className="btn-primary" onClick={onClose}>
             Fertig

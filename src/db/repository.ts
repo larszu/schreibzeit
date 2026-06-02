@@ -29,6 +29,8 @@ export const DEFAULT_EINSTELLUNGEN: Einstellungen = {
   nurInitialen: false,
   datenschutzBestaetigt: false,
   standardSpalten: ['vorlage', 'schwingen', 'merkstellen', 'auswendig'],
+  customLineaturen: [],
+  grundwortschatzId: '',
 };
 
 export interface Repository {

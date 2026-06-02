@@ -10,10 +10,12 @@ import {
 } from '@/components/print/KnickblattDocument';
 import {
   SPALTEN_DEFS,
+  LINEATUR_LABEL,
   createDefaultKnickblattConfig,
   defaultKnickspalten,
+  resolveLineatur,
 } from '@/core/knickblatt';
-import { useLernwoerter } from '@/state/hooks';
+import { useFonts, useLernwoerter } from '@/state/hooks';
 import { displayName } from '@/state/store';
 import { repository } from '@/db/repository';
 import { t } from '@/i18n/de';
@@ -63,6 +65,7 @@ export function KnickblattView({
   klassen: Klasse[];
 }) {
   const woerter = useLernwoerter(kind.id);
+  const fonts = useFonts();
   const [config, setConfig] = useState<KnickblattConfig>(() =>
     createDefaultKnickblattConfig({
       spalten: vollstaendigeSpalten(einstellungen.standardSpalten),
@@ -120,6 +123,7 @@ export function KnickblattView({
   });
   const kopf = kopfFuer(kind);
   const klassenName = klassen.find((c) => c.id === kind.klasseId)?.name;
+  const lineaturMasse = resolveLineatur(config.lineatur, einstellungen.customLineaturen);
 
   // Schnellvorlagen: Standardwerte bzw. ein LRS-/leicht-Preset.
   function presetStandard() {
@@ -149,6 +153,9 @@ export function KnickblattView({
   }
   function renameSpalte(id: string, titel: string) {
     setSpalten(config.spalten.map((s) => (s.id === id ? { ...s, titel } : s)));
+  }
+  function setSymbol(id: string, symbol: string) {
+    setSpalten(config.spalten.map((s) => (s.id === id ? { ...s, symbol } : s)));
   }
   function deleteSpalte(id: string) {
     setSpalten(config.spalten.filter((s) => s.id !== id));
@@ -257,17 +264,46 @@ export function KnickblattView({
                   id="kb-lineatur"
                   className="input"
                   value={config.lineatur}
-                  onChange={(e) =>
-                    setConfig((c) => ({ ...c, lineatur: e.target.value as Lineatur }))
-                  }
+                  onChange={(e) => setConfig((c) => ({ ...c, lineatur: e.target.value }))}
                 >
                   {LINEATUREN.map((l) => (
                     <option key={l} value={l}>
-                      {t.lineatur[l]}
+                      {LINEATUR_LABEL[l]}
                     </option>
                   ))}
+                  {einstellungen.customLineaturen.length > 0 && (
+                    <optgroup label="Eigene Lineaturen">
+                      {einstellungen.customLineaturen.map((cl) => (
+                        <option key={cl.id} value={cl.id}>
+                          {cl.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               </div>
+            </div>
+
+            <div>
+              <label className="label" htmlFor="kb-font">
+                Schrift der Vorlage
+              </label>
+              <select
+                id="kb-font"
+                className="input"
+                value={config.vorlageFont ?? ''}
+                onChange={(e) =>
+                  setConfig((c) => ({ ...c, vorlageFont: e.target.value || undefined }))
+                }
+              >
+                <option value="">Standard (Serif)</option>
+                <option value="'Inter', system-ui, sans-serif">Serifenlos (LRS-freundlich)</option>
+                {fonts.map((f) => (
+                  <option key={f.id} value={f.name}>
+                    {f.name} (eigene Schrift)
+                  </option>
+                ))}
+              </select>
             </div>
 
             <fieldset className="rounded-lg border border-paper-200 p-3">
@@ -318,7 +354,14 @@ export function KnickblattView({
                     onChange={() => toggleSpalte(s.id)}
                     aria-label="Spalte anzeigen"
                   />
-                  <span className="shrink-0 text-base">{def.symbol}</span>
+                  <input
+                    className="w-8 shrink-0 rounded border border-transparent bg-transparent px-0.5 py-0.5 text-center text-base hover:border-paper-300 focus:border-brand-400 focus:bg-white focus:outline-none"
+                    value={s.symbol ?? def.symbol}
+                    onChange={(e) => setSymbol(s.id, e.target.value)}
+                    aria-label="Symbol"
+                    title="Symbol/Emoji ändern"
+                    maxLength={3}
+                  />
                   <input
                     className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-sm hover:border-paper-300 focus:border-brand-400 focus:bg-white focus:outline-none"
                     value={s.titel ?? def.titel}
@@ -441,7 +484,12 @@ export function KnickblattView({
         <div ref={previewRef} className="overflow-hidden rounded-xl2 bg-paper-200 p-4">
           {/* `zoom` skaliert inkl. Layouthöhe, sodass keine Leerfläche entsteht. */}
           <div className="print-preview" style={{ zoom: scale } as React.CSSProperties}>
-            <KnickblattDocument woerter={ausgewaehlteWoerter} config={config} kopf={kopf} />
+            <KnickblattDocument
+              woerter={ausgewaehlteWoerter}
+              config={config}
+              kopf={kopf}
+              lineaturMasse={lineaturMasse}
+            />
           </div>
         </div>
         {stapel ? (
@@ -467,10 +515,16 @@ export function KnickblattView({
               woerter={d.woerter}
               config={config}
               kopf={kopfFuer(d.kind)}
+              lineaturMasse={lineaturMasse}
             />
           ))
         ) : (
-          <KnickblattDocument woerter={ausgewaehlteWoerter} config={config} kopf={kopf} />
+          <KnickblattDocument
+            woerter={ausgewaehlteWoerter}
+            config={config}
+            kopf={kopf}
+            lineaturMasse={lineaturMasse}
+          />
         )}
       </PrintPortal>
     </div>

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { IconDownload, IconUpload, IconTrash, IconCheck } from '@/components/icons';
+import { IconDownload, IconUpload, IconTrash, IconCheck, IconPlus } from '@/components/icons';
 import { repository } from '@/db/repository';
 import {
   exportAll,
@@ -8,8 +8,12 @@ import {
   importBackup,
   type ImportModus,
 } from '@/services/backup';
+import { fontHinzufuegen, fontLoeschen } from '@/services/fonts';
+import { useFonts } from '@/state/hooks';
+import { GRUNDWORTSCHATZ_LISTEN } from '@/data/grundwortschatz';
+import { newId } from '@/core/id';
 import { t } from '@/i18n/de';
-import type { Einstellungen, Lineatur } from '@/types';
+import type { CustomLineatur, Einstellungen, Lineatur } from '@/types';
 
 const LINEATUREN: Lineatur[] = ['klasse1', 'klasse2', 'klasse3', 'klasse4', 'haus'];
 
@@ -52,6 +56,43 @@ export function EinstellungenModal({
       claudeModell: claudeModell.trim() || 'claude-opus-4-8',
     });
     flash('Claude-Zugang gespeichert.');
+  }
+
+  // Eigene Lineaturen
+  const fonts = useFonts();
+  const fontFileRef = useRef<HTMLInputElement>(null);
+  const [fontName, setFontName] = useState('');
+  const [nl, setNl] = useState({ name: '', ober: 4, band: 8, unter: 4, farbig: false });
+
+  function lineaturHinzufuegen() {
+    if (!nl.name.trim()) return;
+    const neu: CustomLineatur = {
+      id: newId(),
+      name: nl.name.trim(),
+      oberHoehe: nl.ober,
+      bandHoehe: nl.band,
+      unterHoehe: nl.unter,
+      mittelbandFarbig: nl.farbig,
+    };
+    void repository.saveEinstellungen({
+      customLineaturen: [...einstellungen.customLineaturen, neu],
+    });
+    setNl({ name: '', ober: 4, band: 8, unter: 4, farbig: false });
+    flash('Eigene Lineatur gespeichert.');
+  }
+  function lineaturLoeschen(id: string) {
+    void repository.saveEinstellungen({
+      customLineaturen: einstellungen.customLineaturen.filter((l) => l.id !== id),
+    });
+  }
+  async function fontHochladen(file: File) {
+    try {
+      await fontHinzufuegen(fontName, file);
+      setFontName('');
+      flash('Schriftart hinzugefügt.');
+    } catch (e) {
+      flash(e instanceof Error ? e.message : 'Schriftart konnte nicht hinzugefügt werden.');
+    }
   }
 
   async function exportieren() {
@@ -271,6 +312,185 @@ export function EinstellungenModal({
             />
           </div>
         </div>
+      </section>
+
+      {/* Grundwortschatz */}
+      <section>
+        <h3 className="mb-2 font-serif font-semibold text-ink">Grundwortschatz (Bundesland)</h3>
+        <p className="mb-2 text-sm text-ink-soft">
+          Wählen Sie eine offizielle Wortliste vor. In der Kartei können Sie daraus dann mit einem
+          Klick Wörter in die Kartei eines Kindes übernehmen.
+        </p>
+        <select
+          className="input"
+          value={einstellungen.grundwortschatzId}
+          onChange={(e) => set('grundwortschatzId', e.target.value)}
+        >
+          <option value="">— keine —</option>
+          {GRUNDWORTSCHATZ_LISTEN.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.label}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-ink-faint">
+          Enthalten: Bayern (1/2, 3/4) und Nordrhein-Westfalen. Weitere Bundesländer (z. B. Hessen,
+          Baden-Württemberg) lassen sich als zusätzliche Listen ergänzen.
+        </p>
+      </section>
+
+      {/* Eigene Lineaturen */}
+      <section>
+        <h3 className="mb-2 font-serif font-semibold text-ink">Eigene Lineaturen</h3>
+        <p className="mb-2 text-sm text-ink-soft">
+          Legen Sie eigene Schreiblinien an (Maße in Millimetern: Oberlänge · Mittelband · Unterlänge).
+          Diese erscheinen im Knickblatt zur Auswahl.
+        </p>
+        {einstellungen.customLineaturen.length > 0 && (
+          <ul className="mb-2 divide-y divide-paper-200 rounded-lg border border-paper-200">
+            {einstellungen.customLineaturen.map((l) => (
+              <li key={l.id} className="flex items-center justify-between gap-2 px-3 py-1.5 text-sm">
+                <span>
+                  {l.name}{' '}
+                  <span className="text-ink-faint">
+                    ({l.oberHoehe}·{l.bandHoehe}·{l.unterHoehe} mm
+                    {l.mittelbandFarbig ? ', Mittelband' : ''})
+                  </span>
+                </span>
+                <button
+                  className="btn-ghost p-1 text-danger-500"
+                  onClick={() => lineaturLoeschen(l.id)}
+                  aria-label="Lineatur löschen"
+                >
+                  <IconTrash width={15} height={15} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <input
+            className="input sm:col-span-2"
+            placeholder="Name"
+            value={nl.name}
+            onChange={(e) => setNl({ ...nl, name: e.target.value })}
+          />
+          <input
+            type="number"
+            step="0.5"
+            min={1}
+            className="input"
+            aria-label="Oberlänge mm"
+            value={nl.ober}
+            onChange={(e) => setNl({ ...nl, ober: Number(e.target.value) || 0 })}
+          />
+          <input
+            type="number"
+            step="0.5"
+            min={2}
+            className="input"
+            aria-label="Mittelband mm"
+            value={nl.band}
+            onChange={(e) => setNl({ ...nl, band: Number(e.target.value) || 0 })}
+          />
+          <input
+            type="number"
+            step="0.5"
+            min={1}
+            className="input"
+            aria-label="Unterlänge mm"
+            value={nl.unter}
+            onChange={(e) => setNl({ ...nl, unter: Number(e.target.value) || 0 })}
+          />
+        </div>
+        <div className="mt-2 flex items-center justify-between">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-brand-500"
+              checked={nl.farbig}
+              onChange={(e) => setNl({ ...nl, farbig: e.target.checked })}
+            />
+            Mittelband farbig (Haus-Lineatur)
+          </label>
+          <button className="btn-secondary" onClick={lineaturHinzufuegen} disabled={!nl.name.trim()}>
+            <IconPlus width={18} height={18} /> Lineatur hinzufügen
+          </button>
+        </div>
+      </section>
+
+      {/* Schriftarten */}
+      <section>
+        <h3 className="mb-2 font-serif font-semibold text-ink">Schriftarten</h3>
+        <p className="mb-2 text-sm text-ink-soft">
+          Fügen Sie eigene Schriften hinzu (z. B. eine Grundschrift/Schulausgangsschrift, für die Sie
+          eine Lizenz besitzen). Die Datei bleibt lokal auf dem Gerät. Im Knickblatt ist die Schrift
+          dann für die Vorlage wählbar.
+        </p>
+        {fonts.length > 0 && (
+          <ul className="mb-2 divide-y divide-paper-200 rounded-lg border border-paper-200">
+            {fonts.map((f) => (
+              <li key={f.id} className="flex items-center justify-between gap-2 px-3 py-1.5">
+                <span className="text-sm" style={{ fontFamily: f.name }}>
+                  {f.name} – Aa Bb Cc Som-mer
+                </span>
+                <button
+                  className="btn-ghost p-1 text-danger-500"
+                  onClick={() => void fontLoeschen(f.id)}
+                  aria-label="Schrift löschen"
+                >
+                  <IconTrash width={15} height={15} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            className="input max-w-[12rem]"
+            placeholder="Name (z. B. Grundschrift)"
+            value={fontName}
+            onChange={(e) => setFontName(e.target.value)}
+          />
+          <input
+            ref={fontFileRef}
+            type="file"
+            accept=".ttf,.otf,.woff,.woff2,font/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void fontHochladen(f);
+              e.target.value = '';
+            }}
+          />
+          <button className="btn-secondary" onClick={() => fontFileRef.current?.click()}>
+            <IconUpload width={18} height={18} /> Schriftdatei wählen
+          </button>
+        </div>
+        <details className="mt-2 text-xs text-ink-soft">
+          <summary className="cursor-pointer text-brand-600">
+            Wo bekomme ich Grundschul-Schriften?
+          </summary>
+          <ul className="mt-1 list-disc space-y-0.5 pl-5">
+            <li>
+              <strong>Kostenlos/offen:</strong>{' '}
+              <a className="text-brand-600 underline" href="https://www.peter-wiegel.de/" target="_blank" rel="noreferrer">
+                peter-wiegel.de
+              </a>{' '}
+              (freie deutsche Schulschriften, u. a. Schulausgangsschrift) ·{' '}
+              <a className="text-brand-600 underline" href="https://software.sil.org/andika/" target="_blank" rel="noreferrer">
+                Andika (SIL OFL)
+              </a>{' '}
+              – gut lesbare Fibelschrift.
+            </li>
+            <li>
+              <strong>Lizenzpflichtig</strong> (offizielle „Grundschrift" / Ausgangsschriften):
+              z. B. Grundschulverband, Pelikan, „medienwerkstatt", „Will Software". Nach dem Kauf die
+              Schriftdatei hier hinzufügen.
+            </li>
+            <li>Hinweis: Bitte nur Schriften hinzufügen, deren Lizenz die Nutzung erlaubt.</li>
+          </ul>
+        </details>
       </section>
 
       {/* Datenschutz */}

@@ -76,6 +76,30 @@ export type TextArt = 'geschichte' | 'lueckentext' | 'quatschsaetze';
 /** Lineatur-Vorgaben für Grundschul-Schreiblinien. */
 export type Lineatur = 'klasse1' | 'klasse2' | 'klasse3' | 'klasse4' | 'haus';
 
+/** Maße einer Schreiblinie in Millimetern. */
+export interface LineaturMasse {
+  oberHoehe: number;
+  bandHoehe: number;
+  unterHoehe: number;
+  mittelbandFarbig: boolean;
+}
+
+/** Selbst angelegte Lineatur (zusätzlich zu den eingebauten). */
+export interface CustomLineatur extends LineaturMasse {
+  id: string;
+  name: string;
+}
+
+/** Selbst hinzugefügte Schriftart (Datei liegt in der `fonts`-Tabelle). */
+export interface FontEintrag {
+  id: string;
+  /** CSS-Familienname, unter dem die Schrift registriert wird. */
+  name: string;
+  mime: string;
+  /** Schriftdatei als Data-URL (lokal gespeichert). */
+  dataUrl: string;
+}
+
 /** Strategie-/Spaltentyp eines Knickblatts. */
 export type SpaltenTyp =
   | 'vorlage'
@@ -94,6 +118,8 @@ export interface Knickspalte {
   typ: SpaltenTyp;
   /** Eigener Spaltentitel (überschreibt den Standardtitel). */
   titel?: string;
+  /** Eigenes Symbol/Emoji (überschreibt das Standardsymbol). */
+  symbol?: string;
   /** Gestrichelte Falzlinie unmittelbar vor dieser Spalte einzeichnen. */
   falzDavor?: boolean;
   aktiv: boolean;
@@ -103,7 +129,10 @@ export interface Knickspalte {
 export interface KnickblattConfig {
   spalten: Knickspalte[];
   woerterProBlatt: number;
-  lineatur: Lineatur;
+  /** Lineatur-Kennung: eingebaut (klasse1…haus) oder ID einer eigenen Lineatur. */
+  lineatur: string;
+  /** Schriftfamilie für die Vorlage-Spalte (CSS font-family bzw. eigener Font-Name). */
+  vorlageFont?: string;
   /** Vorlage-Spalte mit vorgedruckten Silbenbögen (Differenzierung). */
   vorlageMitSilben: boolean;
   /** Vorlage-Spalte mit markierten Merkstellen (Differenzierung). */
@@ -127,4 +156,8 @@ export interface Einstellungen {
   nurInitialen: boolean;
   datenschutzBestaetigt: boolean;
   standardSpalten: SpaltenTyp[];
+  /** Eigene, parametrisch angelegte Lineaturen. */
+  customLineaturen: CustomLineatur[];
+  /** Vorausgewählte Grundwortschatz-Liste (z. B. Bundesland), leer = keine. */
+  grundwortschatzId: string;
 }

@@ -2,6 +2,7 @@
 import Dexie, { type Table } from 'dexie';
 import type {
   Einstellungen,
+  FontEintrag,
   Kind,
   Klasse,
   Lernwort,
@@ -14,6 +15,7 @@ export class SchreibzeitDB extends Dexie {
   lernwoerter!: Table<Lernwort, string>;
   uebungstexte!: Table<Uebungstext, string>;
   einstellungen!: Table<Einstellungen, string>;
+  fonts!: Table<FontEintrag, string>;
 
   constructor() {
     super('schreibzeit');
@@ -23,6 +25,10 @@ export class SchreibzeitDB extends Dexie {
       lernwoerter: 'id, kindId, status, wort, erstelltAm',
       uebungstexte: 'id, kindId, erstelltAm',
       einstellungen: 'id',
+    });
+    // v2: eigene Schriftarten (lokal gespeichert).
+    this.version(2).stores({
+      fonts: 'id, name',
     });
   }
 }

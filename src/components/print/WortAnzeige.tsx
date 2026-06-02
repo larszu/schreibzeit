@@ -14,6 +14,7 @@ export function WortAnzeige({
   mitMerkstellen = false,
   artikel,
   groesse = 28,
+  fontFamily,
 }: {
   wort: string;
   silben: string[];
@@ -23,6 +24,8 @@ export function WortAnzeige({
   artikel?: string;
   /** Schriftgröße in px. */
   groesse?: number;
+  /** Schriftfamilie (eigener Font-Name oder CSS-Familie); Standard: Serif. */
+  fontFamily?: string;
 }) {
   const merkSet = new Set(merkstellen);
   // Trennstellen aus den Silben ableiten, um die Bögen zu positionieren.
@@ -40,7 +43,10 @@ export function WortAnzeige({
 
   return (
     <div
-      style={{ fontFamily: '"Source Serif 4", Georgia, serif', color: '#111' }}
+      style={{
+        fontFamily: fontFamily?.trim() || '"Source Serif 4", Georgia, serif',
+        color: '#111',
+      }}
       className="leading-none"
     >
       {artikel && (

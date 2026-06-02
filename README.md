@@ -122,6 +122,7 @@ Sie brauchen **nichts zu installieren, was Adminrechte erfordert**, und keine Pr
 - **Foto-Texterkennung (OCR):** Standard über Gemini, optional über **Claude Vision** (besonders gut bei Handschrift, in den Einstellungen aktivierbar)
 - **Dublettenprüfung** gegen die vorhandene Kartei (bereits vorhandene Wörter markiert)
 - **„Alle übernehmen"** für ganze Listen; automatischer Silben-, Artikel- &amp; Merkstellen-Vorschlag
+- **Aus offiziellem Grundwortschatz** (Bayern 1/2 &amp; 3/4, NRW) gezielt Wörter übernehmen
 
 ---
 
@@ -141,6 +142,7 @@ Sie brauchen **nichts zu installieren, was Adminrechte erfordert**, und keine Pr
 - **Eigene Spalten** hinzufügen, vorhandene **umbenennen, löschen** und sortieren
 - **Schnellvorlagen** (Standard / „LRS · leicht") und **Stapeldruck für die ganze Klasse** (ein Blattsatz je Kind)
 - Echte **Grundschul-Lineatur** (Klasse 1–4 / Haus-Lineatur mit Mittelband), mm-genau
+- **Eigene Lineaturen** anlegen, **eigene Schriftarten** laden &amp; für die Vorlage wählen, **Spalten-Symbole** frei konfigurierbar
 - **Differenzierung**: Vorlage mit vorgedruckten Silbenbögen und/oder Merkstellen
 - Wortauswahl per Filter (Status, neueste, Zufall) · **Live-Vorschau** · Druck/PDF
 
@@ -166,6 +168,22 @@ Sie brauchen **nichts zu installieren, was Adminrechte erfordert**, und keine Pr
 - Export aller Daten als **JSON** (Backup, Umzug zwischen Schul-PCs)
 - Import mit **Zusammenführen** oder **Ersetzen** (mit Sicherheitsabfrage)
 - **Hilfe → Über Schreibzeit** zeigt Version &amp; Infos
+
+---
+
+## 🗂️ Grundwortschatz-Listen (Bundesländer)
+
+Mehrere Bundesländer geben offizielle Grundwortschätze heraus. **Mitgeliefert** sind aktuell:
+
+- **Bayern** (LehrplanPLUS) – Jgst. **1/2** und **3/4**
+- **Nordrhein-Westfalen** – Grundwortschatz (533 Wörter)
+
+**Hessen** und **Baden-Württemberg** haben ebenfalls Grundwortschätze; diese lassen sich als
+zusätzliche Listen ergänzen (gleiches JSON-Format unter `public/data/grundwortschatz/`).
+
+**Vorauswählen:** in **Einstellungen → Grundwortschatz (Bundesland)** eine Liste wählen. In der
+Kartei eines Kindes dann **„Aus Grundwortschatz"** öffnen → einzelne Wörter anklicken oder
+**„Alle übernehmen"**. Quelle/Format: siehe [`public/data/grundwortschatz/QUELLE.md`](public/data/grundwortschatz/QUELLE.md).
 
 ---
 

@@ -29,11 +29,11 @@ Legende: ✅ bereits in Schreibzeit · 🟡 teilweise · ⬜ geplant/Idee
 1. ✅ *Eine Wortliste → viele Übungen*: Knickblatt, Wortkarten, KI-Text aus denselben Lernwörtern.
 2. ✅ *KI-Übungstext* webt die Lernwörter eines Kindes in Geschichte/Lückentext/Quatschsätze ein.
 3. ⬜ *Ein-Klick-Niveaustufen* (Kurz-/Grund-/Langtext) für jedes erzeugte Blatt („dreifach differenziertes Diktat").
-4. 🟡 *Immer editierbare Listen ohne Längenbegrenzung* – **„Alle übernehmen"** für ganze eingefügte/erkannte Listen vorhanden; CSV-/Lehrwerk-Import (FRESCH/Zebra) noch offen.
+4. ✅ *Listen importieren* – **„Alle übernehmen"** für eingefügte/erkannte Listen **und offizielle Grundwortschätze** (Bayern 1/2 & 3/4, NRW) integriert; ⬜ freier CSV-Import (beliebige Lehrwerks-Listen) noch offen.
 
 **Drucken & Arbeitsblätter**
 5. ✅ *Knickblatt-Generator* (Vorlage → schwingen → markieren → knicken → auswendig).
-6. 🟡 *Grundschul-Lineaturen* (Klasse 1–4 / Haus) vorhanden; ⬜ *Grundschrift/Schreibschrift-Fonts* und ⬜ *gepunktete Nachspur-Schrift* fehlen noch.
+6. ✅ *Grundschul-Lineaturen* (Klasse 1–4 / Haus) **+ eigene Lineaturen** (parametrisch) **+ eigene Schriftarten** (Upload lizenzierter Grundschrift/Schulausgangsschrift, Auswahl für die Vorlage) **+ konfigurierbare Spalten-Symbole**; ⬜ mitgelieferte gepunktete Nachspur-Schrift noch offen.
 7. ✅ *Silbenbögen* (zuschaltbar) und Merkstellen-Markierung auf der Vorlage.
 8. ✅ *Druckfertiges PDF* **und Stapeldruck** (ganze Klasse – ein Blattsatz je Kind in einem Rutsch).
 

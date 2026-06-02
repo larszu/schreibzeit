@@ -3,7 +3,11 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
 import { DEFAULT_EINSTELLUNGEN } from '@/db/repository';
-import type { Einstellungen, Kind, Klasse, Lernwort, Uebungstext } from '@/types';
+import type { Einstellungen, FontEintrag, Kind, Klasse, Lernwort, Uebungstext } from '@/types';
+
+export function useFonts(): FontEintrag[] {
+  return useLiveQuery(async () => db.fonts.toArray(), []) ?? [];
+}
 
 export function useKlassen(): Klasse[] {
   return (

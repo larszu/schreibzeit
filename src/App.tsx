@@ -20,6 +20,7 @@ import { useEinstellungen, useKinder, useKlassen } from './state/hooks';
 import { displayName, useUiStore, type TabId } from './state/store';
 import { repository } from './db/repository';
 import { ladeWoerterbuch } from './services/dictionary';
+import { registriereAlleFonts } from './services/fonts';
 import { t } from './i18n/de';
 
 const TABS: { id: TabId; label: string; icon: typeof IconBook }[] = [
@@ -71,6 +72,7 @@ export default function App() {
   useEffect(() => {
     void repository.getEinstellungen();
     void ladeWoerterbuch();
+    void registriereAlleFonts();
   }, []);
 
   // Falls das ausgewählte Kind gelöscht wurde, Auswahl zurücksetzen.
