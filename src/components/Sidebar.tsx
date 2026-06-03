@@ -6,8 +6,8 @@ import {
   IconEdit,
   IconTrash,
   IconKey,
-  IconPanelLeftClose,
-  IconPanelLeftOpen,
+  IconChevronsLeft,
+  IconChevronsRight,
 } from './icons';
 import { Modal } from './ui';
 import { PrintPortal } from './print/PrintPortal';
@@ -78,7 +78,7 @@ export function Sidebar({
             aria-label="Seitenleiste einklappen"
             title="Seitenleiste einklappen"
           >
-            <IconPanelLeftClose width={18} height={18} />
+            <IconChevronsLeft width={18} height={18} />
           </button>
         )}
       </div>
@@ -264,7 +264,7 @@ export function SidebarRail({
         aria-label="Seitenleiste ausklappen"
         title="Kinderliste ausklappen"
       >
-        <IconPanelLeftOpen width={18} height={18} />
+        <IconChevronsRight width={18} height={18} />
       </button>
       <div className="my-2 h-px w-7 bg-paper-200" />
       <nav className="flex w-full flex-1 flex-col items-center gap-1 overflow-y-auto px-1.5 py-0.5">

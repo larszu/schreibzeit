@@ -109,16 +109,15 @@ export const IconPanelLeft = (p: P) => (
     <path d="M9 4v16" />
   </svg>
 );
-export const IconPanelLeftClose = (p: P) => (
+// Doppel-Chevron nach links/rechts – klar als „Leiste einklappen/ausklappen" lesbar.
+export const IconChevronsLeft = (p: P) => (
   <svg {...base(p)}>
-    <rect x="3" y="4" width="18" height="16" rx="2" />
-    <path d="M9 4v16M16 9l-3 3 3 3" />
+    <path d="M11 6l-6 6 6 6M18 6l-6 6 6 6" />
   </svg>
 );
-export const IconPanelLeftOpen = (p: P) => (
+export const IconChevronsRight = (p: P) => (
   <svg {...base(p)}>
-    <rect x="3" y="4" width="18" height="16" rx="2" />
-    <path d="M9 4v16M14 9l3 3-3 3" />
+    <path d="M13 6l6 6-6 6M6 6l6 6-6 6" />
   </svg>
 );
 export const IconSpeaker = (p: P) => (
