@@ -52,6 +52,10 @@ export interface Lernwort {
   silben: string[];
   merkstellen: number[];
   status: WortStatus;
+  /** Spaced-Repetition: Leitner-Fach (1–5). */
+  fach?: number;
+  /** Spaced-Repetition: nächste Wiedervorlage (Zeitstempel). */
+  faelligAm?: number;
   quelle?: string;
   notiz?: string;
   erstelltAm: number;

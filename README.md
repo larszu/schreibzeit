@@ -129,6 +129,8 @@ Die App lässt sich mit einem Klick als Webseite veröffentlichen:
 - Status `neu` · `wird geübt` · `sitzt` mit Filter &amp; Sortierung
 - Hinzufügen, bearbeiten, löschen, duplizieren, Massenaktionen
 - **Wort vorlesen** &amp; **Diktat-Modus** (liest die Wörter mit Pause vor – Selbst-Diktat, offline)
+- **Üben-Modus mit Spaced-Repetition** (Leitner-5-Fächer): fällige Wörter werden abgefragt, richtig Beantwortetes kommt erst nach 1/3/7/16 Tagen wieder, Wackliges sofort – mit Fälligkeits-Badge
+- **Elternblatt** drucken: A4-quer-Wochenblatt mit kurzer FRESCH-Anleitung, Vorlage je Wort + Schreibzeilen + Unterschrift – fertig zum Mitgeben nach Hause
 - **Lernstands-Übersicht drucken** (für Elterngespräche/Doku)
 - Durchsuchbare Sidebar, schnelles Umschalten zwischen Kindern
 

@@ -154,6 +154,9 @@ class DexieRepository implements Repository {
       silben: extra.silben ?? splitSyllables(trimmed),
       merkstellen: extra.merkstellen ?? suggestMerkstellen(trimmed),
       status: extra.status ?? 'neu',
+      // Spaced Repetition: neue Wörter sind sofort fällig, starten in Fach 1.
+      fach: extra.fach ?? 1,
+      faelligAm: extra.faelligAm ?? ts,
       quelle: extra.quelle,
       notiz: extra.notiz,
       erstelltAm: ts,

@@ -45,11 +45,11 @@ Legende: ✅ bereits in Schreibzeit · 🟡 teilweise · ⬜ geplant/Idee
 **Fortschritt verfolgen (CRM-Kern)**
 12. ✅ *Digitale Lernwörter-Kartei pro Kind* mit Status `neu/wird geübt/sitzt`.
 13. ⬜ *Fehlerwort-Erfassung → Auto-Kartei*: einmal eintragen, fließt in den Übungsstapel.
-14. ⬜ *Spaced-Repetition / „5-Fächer"-Logik*: Sitzendes fällt raus, Wackliges kommt wieder.
+14. ✅ *Spaced-Repetition / „5-Fächer"-Logik*: Leitner-Verfahren (5 Fächer, Intervalle 1/3/7/16 Tage). **Üben**-Modus mit Wiedervorlage – richtig beantwortete Wörter steigen ein Fach auf und kommen später wieder, falsche fallen zurück in Fach 1. Fälligkeits-Badge in der Werkzeugleiste.
 15. ⬜ *Fortschritt über Zeit* je Kind und je Rechtschreib-Phänomen (Auswertung).
 
 **Elternkommunikation**
-16. ✅ *Audio-Diktat*: **Wort vorlesen** + **Diktat-Modus** (liest die Wörter mit einstellbarer Pause vor, optional 2×) – Selbst-Diktat-Training; ⬜ fertiges Wochen-Übungspaket für zu Hause noch offen.
+16. ✅ *Audio-Diktat & Eltern-Übungspaket*: **Wort vorlesen** + **Diktat-Modus** (liest die Wörter mit einstellbarer Pause vor, optional 2×) – Selbst-Diktat-Training; **Elternblatt** (A4-quer-Wochenblatt mit kurzer FRESCH-Anleitung, Vorlage je Wort + Schreibzeilen + Unterschriftszeile) zum Ausdrucken/Mitgeben.
 17. ⬜ *Kurzer Eltern-Status* („8/10 geübt") – ohne Eltern-Cloud-Konto.
 
 **Berichte**
