@@ -16,6 +16,7 @@ import {
   resolveLineaturRender,
 } from '@/core/knickblatt';
 import { WortAuswahlListe } from '@/components/WortAuswahlListe';
+import { EINGEBAUTE_SCHRIFTEN } from '@/services/fonts';
 import { useFonts, useLernwoerter } from '@/state/hooks';
 import { displayName } from '@/state/store';
 import { repository } from '@/db/repository';
@@ -73,6 +74,7 @@ export function KnickblattView({
       spalten: vollstaendigeSpalten(einstellungen.standardSpalten),
       lineatur: einstellungen.standardLineatur,
       woerterProBlatt: einstellungen.standardWoerterProBlatt,
+      vorlageFont: einstellungen.standardVorlageFont,
     }),
   );
   const [auswahl, setAuswahl] = useState<Set<string>>(new Set());
@@ -303,15 +305,24 @@ export function KnickblattView({
                   setConfig((c) => ({ ...c, vorlageFont: e.target.value || undefined }))
                 }
               >
-                <option value="Andika">Andika (Fibelschrift, Standard)</option>
-                <option value="'Source Serif 4', Georgia, serif">Serif (klassisch)</option>
-                <option value="'Inter', system-ui, sans-serif">Serifenlos (LRS-freundlich)</option>
+                {EINGEBAUTE_SCHRIFTEN.map((f) => (
+                  <option key={f.value} value={f.value}>
+                    {f.label}
+                  </option>
+                ))}
                 {fonts.map((f) => (
                   <option key={f.id} value={f.name}>
                     {f.name} {f.system ? '(System-Schrift)' : '(eigene Schrift)'}
                   </option>
                 ))}
               </select>
+              <p
+                className="mt-1 truncate text-xl text-ink"
+                style={{ fontFamily: config.vorlageFont || 'Andika' }}
+                title="Vorschau der gewählten Schrift"
+              >
+                Am Montag üben wir Som-mer.
+              </p>
             </div>
 
             <fieldset className="rounded-lg border border-paper-200 p-3">

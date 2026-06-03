@@ -7,6 +7,13 @@ import { db } from '@/db/db';
 import { newId } from '@/core/id';
 import type { FontEintrag } from '@/types';
 
+/** Mitgelieferte/immer verfügbare Vorlage-Schriften (Wert = CSS font-family). */
+export const EINGEBAUTE_SCHRIFTEN: { value: string; label: string }[] = [
+  { value: 'Andika', label: 'Andika (Fibelschrift, Standard)' },
+  { value: "'Source Serif 4', Georgia, serif", label: 'Serif (klassisch)' },
+  { value: "'Inter', system-ui, sans-serif", label: 'Serifenlos (LRS-freundlich)' },
+];
+
 const registriert = new Set<string>();
 
 function registriere(f: FontEintrag): void {
@@ -91,6 +98,68 @@ export async function fontHinzufuegen(name: string, file: File): Promise<FontEin
 
 export async function fontLoeschen(id: string): Promise<void> {
   await db.fonts.delete(id);
+}
+
+/**
+ * Liest den internen Familiennamen aus einer Schriftdatei (TTF/OTF), damit das
+ * Namensfeld beim Upload automatisch vorbelegt werden kann. Liefert null, wenn
+ * die Datei nicht gelesen werden kann (z. B. komprimierte WOFF/WOFF2).
+ */
+export async function leseSchriftname(file: File): Promise<string | null> {
+  try {
+    return nameAusSfnt(await file.arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+function nameAusSfnt(buf: ArrayBuffer): string | null {
+  const dv = new DataView(buf);
+  if (buf.byteLength < 12) return null;
+  const tag = dv.getUint32(0);
+  // Nur unkomprimierte TTF/OTF: 0x00010000, 'true' (0x74727565), 'OTTO'.
+  if (tag !== 0x00010000 && tag !== 0x74727565 && tag !== 0x4f54544f) return null;
+  const numTables = dv.getUint16(4);
+  let nameOff = -1;
+  for (let i = 0; i < numTables; i++) {
+    const rec = 12 + i * 16;
+    if (dv.getUint32(rec) === 0x6e616d65) {
+      // 'name'
+      nameOff = dv.getUint32(rec + 8);
+      break;
+    }
+  }
+  if (nameOff < 0 || nameOff + 6 > buf.byteLength) return null;
+  const count = dv.getUint16(nameOff + 2);
+  const stringOff = nameOff + dv.getUint16(nameOff + 4);
+  let familie: string | null = null;
+  let bevorzugt: string | null = null;
+  for (let i = 0; i < count; i++) {
+    const rec = nameOff + 6 + i * 12;
+    const platformID = dv.getUint16(rec);
+    const nameID = dv.getUint16(rec + 6);
+    const len = dv.getUint16(rec + 8);
+    const off = dv.getUint16(rec + 10);
+    if (nameID !== 1 && nameID !== 16) continue;
+    const str = leseNameString(dv, stringOff + off, len, platformID);
+    if (!str) continue;
+    if (nameID === 16) bevorzugt = bevorzugt ?? str;
+    else familie = familie ?? str;
+  }
+  return (bevorzugt ?? familie) || null;
+}
+
+function leseNameString(dv: DataView, start: number, len: number, platformID: number): string {
+  if (start + len > dv.byteLength) return '';
+  let s = '';
+  if (platformID === 3 || platformID === 0) {
+    // Unicode / Windows: UTF-16BE
+    for (let i = 0; i + 1 < len; i += 2) s += String.fromCharCode(dv.getUint16(start + i));
+  } else {
+    // Macintosh: ASCII (vereinfacht)
+    for (let i = 0; i < len; i++) s += String.fromCharCode(dv.getUint8(start + i));
+  }
+  return s.trim();
 }
 
 /** Steht die Local-Font-Access-API zur Verfügung (Chromium/Desktop)? */

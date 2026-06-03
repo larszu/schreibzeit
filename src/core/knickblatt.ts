@@ -171,22 +171,27 @@ export function activeSpalten(config: KnickblattConfig): Array<Knickspalte & Spa
     });
 }
 
-// Lineatur-Maße in Millimetern (Grundschul-Schreiblinien mit Mittelband).
-// `bandHoehe` = Höhe des Mittelbands (x-Höhe), `oberHoehe`/`unterHoehe` =
-// Ober-/Unterlänge. Werte sinken mit steigender Klassenstufe.
+// Lineatur-Maße in Millimetern – an die in Deutschland genormten Schulheft-
+// Lineaturen (DIN 16552-1) angelehnt. `bandHoehe` = Höhe des Mittelbands
+// (x-Höhe), `oberHoehe`/`unterHoehe` = Ober-/Unterlänge. `linienModus` regelt,
+// wie viele Linien gezeichnet werden:
+//   Lin. 1 (Kl. 1): 4 Linien, farbiges Kontrast-/Mittelband, 5 mm
+//   Lin. 2 (Kl. 2): 4 Linien, 4 mm
+//   Lin. 3 (Kl. 3): nur Mittel- und Grundlinie (2 Linien), 3,5 mm
+//   Lin. 4 (Kl. 4): nur Grundlinie (1 Linie), 10 mm Zeile
 export const LINEATUR_MASSE: Record<Lineatur, LineaturMasse> = {
-  klasse1: { oberHoehe: 5, bandHoehe: 10, unterHoehe: 5, mittelbandFarbig: false },
-  klasse2: { oberHoehe: 4, bandHoehe: 8, unterHoehe: 4, mittelbandFarbig: false },
-  klasse3: { oberHoehe: 3, bandHoehe: 6, unterHoehe: 3, mittelbandFarbig: false },
-  klasse4: { oberHoehe: 2.5, bandHoehe: 5, unterHoehe: 2.5, mittelbandFarbig: false },
-  haus: { oberHoehe: 4, bandHoehe: 8, unterHoehe: 4, mittelbandFarbig: true },
+  klasse1: { oberHoehe: 5, bandHoehe: 5, unterHoehe: 5, mittelbandFarbig: true, linienModus: 'vier' },
+  klasse2: { oberHoehe: 4, bandHoehe: 4, unterHoehe: 4, mittelbandFarbig: false, linienModus: 'vier' },
+  klasse3: { oberHoehe: 3.5, bandHoehe: 3.5, unterHoehe: 3.5, mittelbandFarbig: false, linienModus: 'zwei' },
+  klasse4: { oberHoehe: 6.5, bandHoehe: 0, unterHoehe: 3.5, mittelbandFarbig: false, linienModus: 'eins' },
+  haus: { oberHoehe: 4, bandHoehe: 8, unterHoehe: 4, mittelbandFarbig: true, linienModus: 'vier' },
 };
 
 export const LINEATUR_LABEL: Record<Lineatur, string> = {
-  klasse1: 'Lineatur Klasse 1',
-  klasse2: 'Lineatur Klasse 2',
-  klasse3: 'Lineatur Klasse 3',
-  klasse4: 'Lineatur Klasse 4',
+  klasse1: 'Klasse 1 · Lin. 1 (Kontrast)',
+  klasse2: 'Klasse 2 · Lin. 2',
+  klasse3: 'Klasse 3 · Lin. 3 (2 Linien)',
+  klasse4: 'Klasse 4 · Lin. 4 (1 Linie)',
   haus: 'Haus-Lineatur (Mittelband)',
 };
 

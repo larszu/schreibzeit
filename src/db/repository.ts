@@ -25,6 +25,7 @@ export const DEFAULT_EINSTELLUNGEN: Einstellungen = {
   lehrkraftName: '',
   schulName: '',
   standardLineatur: 'klasse2',
+  standardVorlageFont: 'Andika',
   standardWoerterProBlatt: 10,
   nurInitialen: false,
   datenschutzBestaetigt: false,

@@ -88,6 +88,13 @@ export interface LineaturMasse {
   bandHoehe: number;
   unterHoehe: number;
   mittelbandFarbig: boolean;
+  /**
+   * Anzahl der gezeichneten Linien (DIN-konforme Grundschul-Lineaturen):
+   * 'vier' = Ober-/Mittel-/Grund-/Unterlinie (Lin. 1/2),
+   * 'zwei' = nur Mittel- und Grundlinie (Lin. 3),
+   * 'eins' = nur Grundlinie (Lin. 4). Standard: 'vier'.
+   */
+  linienModus?: 'vier' | 'zwei' | 'eins';
 }
 
 /**
@@ -176,6 +183,8 @@ export interface Einstellungen {
   lehrkraftName: string;
   schulName: string;
   standardLineatur: Lineatur;
+  /** Standard-Schrift für gedruckte Vorlagen (Knickblatt, Wortkarten, Elternblatt). */
+  standardVorlageFont: string;
   standardWoerterProBlatt: number;
   /** Nur Initialen/Spitznamen statt Klarnamen anzeigen (DSGVO-Hilfe). */
   nurInitialen: boolean;

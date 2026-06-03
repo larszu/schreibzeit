@@ -26,9 +26,11 @@ function Linie({ top, stark }: { top: number; stark?: boolean }) {
 function ParametrischeLinie({ masse }: { masse: LineaturMasse }) {
   const m = masse;
   const total = m.oberHoehe + m.bandHoehe + m.unterHoehe;
+  const modus = m.linienModus ?? 'vier';
+  const grundlinie = m.oberHoehe + m.bandHoehe;
   return (
     <div style={{ position: 'relative', height: `${total}mm`, width: '100%' }}>
-      {m.mittelbandFarbig && (
+      {m.mittelbandFarbig && modus !== 'eins' && (
         <div
           style={{
             position: 'absolute',
@@ -40,10 +42,13 @@ function ParametrischeLinie({ masse }: { masse: LineaturMasse }) {
           }}
         />
       )}
-      <Linie top={0} />
-      <Linie top={m.oberHoehe} />
-      <Linie top={m.oberHoehe + m.bandHoehe} stark />
-      <Linie top={total} />
+      {/* Oberlinie und Unterlinie nur bei vierliniger Lineatur (Lin. 1/2). */}
+      {modus === 'vier' && <Linie top={0} />}
+      {/* Mittellinie (x-Höhe) bei vier- und zweiliniger Lineatur (Lin. 1/2/3). */}
+      {modus !== 'eins' && <Linie top={m.oberHoehe} />}
+      {/* Grundlinie ist immer vorhanden. */}
+      <Linie top={grundlinie} stark />
+      {modus === 'vier' && <Linie top={total} />}
     </div>
   );
 }

@@ -14,6 +14,7 @@ const PAGE_WIDTH_PX = 281 * 3.7795;
 
 export function WortkartenView({
   kind,
+  einstellungen,
 }: {
   kind: Kind;
   einstellungen: Einstellungen;
@@ -146,6 +147,7 @@ export function WortkartenView({
               mitMerkstellen={mitMerkstellen}
               mitArtikel={mitArtikel}
               mitSilben={mitSilben}
+              fontFamily={einstellungen.standardVorlageFont}
             />
           </div>
         </div>
@@ -158,6 +160,7 @@ export function WortkartenView({
           mitMerkstellen={mitMerkstellen}
           mitArtikel={mitArtikel}
           mitSilben={mitSilben}
+          fontFamily={einstellungen.standardVorlageFont}
         />
       </PrintPortal>
     </div>

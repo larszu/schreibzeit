@@ -14,6 +14,7 @@ export function ElternblattDocument({
   lehrkraft,
   schule,
   lineatur = 'klasse2',
+  fontFamily,
 }: {
   woerter: Lernwort[];
   kindName: string;
@@ -22,6 +23,7 @@ export function ElternblattDocument({
   lehrkraft?: string;
   schule?: string;
   lineatur?: keyof typeof LINEATUR_MASSE;
+  fontFamily?: string;
 }) {
   const masse = LINEATUR_MASSE[lineatur];
   // Wörter auf zwei Spalten verteilen.
@@ -65,6 +67,7 @@ export function ElternblattDocument({
                   merkstellen={w.merkstellen}
                   artikel={w.artikel || undefined}
                   groesse={18}
+                  fontFamily={fontFamily}
                 />
                 <div className="mt-1 flex flex-col gap-[2.5mm]">
                   <Schreiblinie render={{ typ: 'parametrisch', masse }} />

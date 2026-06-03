@@ -69,8 +69,8 @@ describe('paginate', () => {
 
 describe('Lineatur', () => {
   it('summiert Ober-, Mittel- und Unterband', () => {
-    const masse = LINEATUR_MASSE.klasse2;
-    expect(lineaturGesamtHoehe(masse)).toBe(16);
+    const masse = LINEATUR_MASSE.klasse2; // Lin. 2: 4 + 4 + 4 mm
+    expect(lineaturGesamtHoehe(masse)).toBe(12);
   });
 
   it('verkleinert die Lineatur mit steigender Klassenstufe', () => {

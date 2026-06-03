@@ -19,6 +19,8 @@ import {
   systemSchriftenVerfuegbar,
   ladeSystemSchriften,
   systemSchriftHinzufuegen,
+  leseSchriftname,
+  EINGEBAUTE_SCHRIFTEN,
 } from '@/services/fonts';
 import { useFonts, useWortlisten } from '@/state/hooks';
 import {
@@ -108,9 +110,11 @@ export function EinstellungenModal({
   }
   async function fontHochladen(file: File) {
     try {
-      await fontHinzufuegen(fontName, file);
+      // Namensfeld leer? Internen Familiennamen aus der Datei auslesen.
+      const name = fontName.trim() || (await leseSchriftname(file)) || '';
+      const eintrag = await fontHinzufuegen(name, file);
       setFontName('');
-      flash('Schriftart hinzugefügt.');
+      flash(`Schriftart „${eintrag.name}" hinzugefügt.`);
     } catch (e) {
       flash(e instanceof Error ? e.message : 'Schriftart konnte nicht hinzugefügt werden.');
     }
@@ -338,6 +342,37 @@ export function EinstellungenModal({
               onBlur={() => set('standardWoerterProBlatt', wpb)}
             />
           </div>
+        </div>
+        <div className="mt-3">
+          <label className="label" htmlFor="set-font">
+            Standard-Schrift der Vorlage
+          </label>
+          <select
+            id="set-font"
+            className="input"
+            value={einstellungen.standardVorlageFont}
+            onChange={(e) => set('standardVorlageFont', e.target.value)}
+          >
+            {EINGEBAUTE_SCHRIFTEN.map((f) => (
+              <option key={f.value} value={f.value}>
+                {f.label}
+              </option>
+            ))}
+            {fonts.map((f) => (
+              <option key={f.id} value={f.name}>
+                {f.name} {f.system ? '(System-Schrift)' : '(eigene Schrift)'}
+              </option>
+            ))}
+          </select>
+          <p
+            className="mt-1 truncate text-xl text-ink"
+            style={{ fontFamily: einstellungen.standardVorlageFont || 'Andika' }}
+          >
+            Am Montag üben wir Som-mer.
+          </p>
+          <p className="mt-1 text-xs text-ink-faint">
+            Gilt für Knickblatt, Wortkarten und Elternblatt. Eigene Schriften unten hinzufügen.
+          </p>
         </div>
       </Accordion>
 

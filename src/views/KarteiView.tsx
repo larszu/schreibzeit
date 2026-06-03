@@ -235,6 +235,7 @@ export function KarteiView({
             lineatur={einstellungen.standardLineatur}
             lehrkraft={einstellungen.lehrkraftName || undefined}
             schule={einstellungen.schulName || undefined}
+            fontFamily={einstellungen.standardVorlageFont}
           />
         </PrintPortal>
       )}

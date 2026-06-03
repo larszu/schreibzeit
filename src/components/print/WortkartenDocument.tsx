@@ -9,12 +9,14 @@ export function WortkartenDocument({
   mitMerkstellen = true,
   mitArtikel = true,
   mitSilben = false,
+  fontFamily,
 }: {
   woerter: Lernwort[];
   spalten?: number;
   mitMerkstellen?: boolean;
   mitArtikel?: boolean;
   mitSilben?: boolean;
+  fontFamily?: string;
 }) {
   // Kärtchen pro Seite abhängig von der Spaltenzahl (feste 4 Reihen).
   const reihen = 4;
@@ -47,6 +49,7 @@ export function WortkartenDocument({
                   mitSilben={mitSilben}
                   artikel={mitArtikel ? w.artikel || undefined : undefined}
                   groesse={30}
+                  fontFamily={fontFamily}
                 />
               </div>
             ))}
