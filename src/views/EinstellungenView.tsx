@@ -470,10 +470,6 @@ export function EinstellungenModal({
               <ul className="mt-1 list-disc space-y-0.5 pl-5">
                 <li>
                   Frei/offen:{' '}
-                  <a className="text-brand-600 underline" href="https://www.peter-wiegel.de/" target="_blank" rel="noreferrer">
-                    peter-wiegel.de
-                  </a>{' '}
-                  (freie dt. Schulschriften) ·{' '}
                   <a className="text-brand-600 underline" href="https://software.sil.org/andika/" target="_blank" rel="noreferrer">
                     Andika (mitgeliefert)
                   </a>
