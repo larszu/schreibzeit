@@ -30,7 +30,7 @@ export function Modal({
   // transformierten Vorfahren (z. B. der Sidebar) beschnitten wird.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/40 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-hidden bg-ink/40 p-4 sm:items-center"
       role="dialog"
       aria-modal="true"
       aria-label={titel}
@@ -49,7 +49,11 @@ export function Modal({
             <IconClose />
           </button>
         </div>
-        <div className="overflow-y-auto px-5 py-4">{children}</div>
+        {/* Eigene Kompositionsebene + overscroll-contain verhindern Repaint-
+            Artefakte (Geister-Text) beim Scrollen langer Inhalte in Chromium. */}
+        <div className="overflow-y-auto overscroll-contain px-5 py-4 [transform:translateZ(0)]">
+          {children}
+        </div>
       </div>
     </div>,
     document.body,

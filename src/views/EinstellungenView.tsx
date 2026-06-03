@@ -13,15 +13,8 @@ import {
   importBackup,
   type ImportModus,
 } from '@/services/backup';
-import {
-  fontHinzufuegen,
-  fontLoeschen,
-  systemSchriftenVerfuegbar,
-  ladeSystemSchriften,
-  systemSchriftHinzufuegen,
-  leseSchriftname,
-  EINGEBAUTE_SCHRIFTEN,
-} from '@/services/fonts';
+import { fontHinzufuegen, fontLoeschen, leseSchriftname, EINGEBAUTE_SCHRIFTEN } from '@/services/fonts';
+import { SystemSchriftPicker } from '@/components/SystemSchriftPicker';
 import { useFonts, useWortlisten } from '@/state/hooks';
 import {
   GRUNDWORTSCHATZ_LISTEN,
@@ -65,8 +58,6 @@ export function EinstellungenModal({
   const [claudeKey, setClaudeKey] = useState(einstellungen.claudeApiKey);
   const [claudeModell, setClaudeModell] = useState(einstellungen.claudeModell);
   const [fontName, setFontName] = useState('');
-  const [systemFontName, setSystemFontName] = useState('');
-  const [systemFonts, setSystemFonts] = useState<string[]>([]);
   // Ziel beim Wortlisten-Import: 'neu' = neue Liste, sonst die zu ersetzende ID.
   const [importZiel, setImportZiel] = useState<string>('neu');
   // Freitextfelder lokal halten (sonst „verschluckt" der an die Datenbank
@@ -117,24 +108,6 @@ export function EinstellungenModal({
       flash(`Schriftart „${eintrag.name}" hinzugefügt.`);
     } catch (e) {
       flash(e instanceof Error ? e.message : 'Schriftart konnte nicht hinzugefügt werden.');
-    }
-  }
-  async function systemSchriftenAnzeigen() {
-    try {
-      const liste = await ladeSystemSchriften();
-      setSystemFonts(liste);
-      flash(liste.length ? `${liste.length} installierte Schriften gefunden.` : 'Keine Schriften gefunden.');
-    } catch {
-      flash('Zugriff auf System-Schriften nicht möglich.');
-    }
-  }
-  async function systemSchriftSpeichern() {
-    try {
-      await systemSchriftHinzufuegen(systemFontName);
-      setSystemFontName('');
-      flash('System-Schrift hinzugefügt.');
-    } catch (e) {
-      flash(e instanceof Error ? e.message : 'Schrift konnte nicht hinzugefügt werden.');
     }
   }
   async function wortlisteHochladen(file: File) {
@@ -412,15 +385,15 @@ export function EinstellungenModal({
               <strong> Andika</strong>.
             </p>
             {fonts.length > 0 && (
-              <ul className="mb-2 divide-y divide-paper-200 rounded-lg border border-paper-200">
+              <ul className="mb-3 divide-y divide-paper-200 rounded-lg border border-paper-200">
                 {fonts.map((f) => (
                   <li key={f.id} className="flex items-center justify-between gap-2 px-3 py-1.5">
-                    <span className="text-sm" style={{ fontFamily: f.name }}>
+                    <span className="min-w-0 flex-1 truncate text-sm" style={{ fontFamily: `"${f.name}"` }}>
                       {f.name} – Aa Bb Som-mer
                       {f.system && <span className="ml-1 text-xs text-ink-faint">(System)</span>}
                     </span>
                     <button
-                      className="btn-ghost p-1 text-danger-500"
+                      className="btn-ghost shrink-0 p-1 text-danger-500"
                       onClick={() => void fontLoeschen(f.id)}
                       aria-label="Schrift löschen"
                     >
@@ -430,72 +403,49 @@ export function EinstellungenModal({
                 ))}
               </ul>
             )}
-            <div className="flex flex-wrap items-center gap-2">
-              <input
-                className="input max-w-[12rem]"
-                placeholder="Name (z. B. Grundschrift)"
-                value={fontName}
-                onChange={(e) => setFontName(e.target.value)}
-              />
-              <input
-                ref={fontFileRef}
-                type="file"
-                accept=".ttf,.otf,.woff,.woff2,font/*"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) void fontHochladen(f);
-                  e.target.value = '';
-                }}
-              />
-              <button className="btn-secondary" onClick={() => fontFileRef.current?.click()}>
-                <IconUpload width={18} height={18} /> Schriftdatei wählen
-              </button>
-            </div>
 
-            <div className="mt-3 border-t border-paper-200 pt-3">
-              <p className="mb-2 text-sm text-ink-soft">
-                Schon installierte System-Schrift verwenden (z. B. aus Word) – ohne erneutes
-                Installieren. Name eingeben oder aus den installierten Schriften wählen.
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  className="input max-w-[14rem]"
-                  placeholder="Schriftname (z. B. Arial)"
-                  list="system-fonts"
-                  value={systemFontName}
-                  onChange={(e) => setSystemFontName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && systemFontName.trim() && void systemSchriftSpeichern()}
-                />
-                <datalist id="system-fonts">
-                  {systemFonts.map((f) => (
-                    <option key={f} value={f} />
-                  ))}
-                </datalist>
-                <button
-                  className="btn-secondary"
-                  onClick={systemSchriftSpeichern}
-                  disabled={!systemFontName.trim()}
-                >
-                  <IconCheck width={18} height={18} /> Hinzufügen
-                </button>
-                {systemSchriftenVerfuegbar() && (
-                  <button className="btn-ghost" onClick={systemSchriftenAnzeigen}>
-                    Installierte Schriften laden
+            <div className="space-y-4">
+              {/* Eigene Schriftdatei hochladen */}
+              <div className="space-y-2">
+                <span className="label">Eigene Schriftdatei hochladen</span>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <input
+                    className="input sm:max-w-[14rem]"
+                    placeholder="Name (optional)"
+                    value={fontName}
+                    onChange={(e) => setFontName(e.target.value)}
+                  />
+                  <input
+                    ref={fontFileRef}
+                    type="file"
+                    accept=".ttf,.otf,.woff,.woff2,font/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void fontHochladen(f);
+                      e.target.value = '';
+                    }}
+                  />
+                  <button
+                    className="btn-secondary shrink-0"
+                    onClick={() => fontFileRef.current?.click()}
+                  >
+                    <IconUpload width={18} height={18} /> Schriftdatei wählen
                   </button>
-                )}
+                </div>
+                <p className="text-xs text-ink-faint">
+                  Name leer lassen → wird automatisch aus der Datei gelesen (.ttf/.otf).
+                </p>
               </div>
-              {systemFontName.trim() && (
-                <p className="mt-2 text-lg" style={{ fontFamily: systemFontName }}>
-                  Vorschau: Am Montag schwingen wir Som-mer.
+
+              {/* Schon installierte System-Schrift verwenden (durchsuchbar, wie in Word) */}
+              <div className="space-y-1.5">
+                <span className="label">Schon installierte Schrift verwenden</span>
+                <p className="text-xs text-ink-faint">
+                  Nutzt eine bereits installierte Schrift (z. B. aus Word) – ohne erneutes Installieren.
                 </p>
-              )}
-              {!systemSchriftenVerfuegbar() && (
-                <p className="mt-1 text-xs text-ink-faint">
-                  Tipp: Den exakten Schriftnamen eingeben. Das automatische Auflisten installierter
-                  Schriften unterstützt nur die Desktop-App bzw. Chrome.
-                </p>
-              )}
+                <SystemSchriftPicker onAdded={(name) => flash(`Schrift „${name}" hinzugefügt.`)} />
+              </div>
             </div>
 
             <details className="mt-3 text-xs text-ink-soft">
