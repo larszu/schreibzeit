@@ -9,7 +9,7 @@ import {
   IconSparkles,
 } from '@/components/icons';
 import { repository } from '@/db/repository';
-import { useLernwoerter } from '@/state/hooks';
+import { useLernwoerter, useWortlisten } from '@/state/hooks';
 import { syllablesFromBreakpoints, breakpointsFromSyllables } from '@/core/syllables';
 import { suggestMerkstellen } from '@/core/merkstellen';
 import { tokenize, buildExistingSet, normalizeForCompare } from '@/core/tokenize';
@@ -852,6 +852,7 @@ function GrundwortschatzBody({
   einstellungen: Einstellungen;
   vorhandene: Lernwort[];
 }) {
+  const eigeneListen = useWortlisten();
   const [listeId, setListeId] = useState(
     () => einstellungen.grundwortschatzId || GRUNDWORTSCHATZ_LISTEN[0].id,
   );
@@ -899,11 +900,22 @@ function GrundwortschatzBody({
             value={listeId}
             onChange={(e) => setListeId(e.target.value)}
           >
-            {GRUNDWORTSCHATZ_LISTEN.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.label}
-              </option>
-            ))}
+            <optgroup label="Mitgeliefert">
+              {GRUNDWORTSCHATZ_LISTEN.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.label}
+                </option>
+              ))}
+            </optgroup>
+            {eigeneListen.length > 0 && (
+              <optgroup label="Eigene (importiert)">
+                {eigeneListen.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.label} ({l.woerter.length})
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
           {offene.length > 0 && (
             <button className="btn-secondary" onClick={alleUebernehmen}>

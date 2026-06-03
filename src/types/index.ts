@@ -109,8 +109,18 @@ export interface FontEintrag {
   /** CSS-Familienname, unter dem die Schrift registriert wird. */
   name: string;
   mime: string;
-  /** Schriftdatei als Data-URL (lokal gespeichert). */
-  dataUrl: string;
+  /** Schriftdatei als Data-URL (lokal gespeichert). Fehlt bei System-Schriften. */
+  dataUrl?: string;
+  /** True = bereits auf dem System installierte Schrift (kein Datei-Upload nötig). */
+  system?: boolean;
+}
+
+/** Selbst importierte Wortliste (eigener „Grundwortschatz"). */
+export interface Wortliste {
+  id: string;
+  label: string;
+  woerter: string[];
+  erstelltAm: number;
 }
 
 /** Strategie-/Spaltentyp eines Knickblatts. */

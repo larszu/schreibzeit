@@ -10,6 +10,8 @@ import type { FontEintrag } from '@/types';
 const registriert = new Set<string>();
 
 function registriere(f: FontEintrag): void {
+  // System-Schriften sind bereits installiert – kein FontFace nötig.
+  if (f.system || !f.dataUrl) return;
   if (registriert.has(f.id) || typeof FontFace === 'undefined') return;
   try {
     const face = new FontFace(f.name, `url(${f.dataUrl})`);
@@ -89,4 +91,36 @@ export async function fontHinzufuegen(name: string, file: File): Promise<FontEin
 
 export async function fontLoeschen(id: string): Promise<void> {
   await db.fonts.delete(id);
+}
+
+/** Steht die Local-Font-Access-API zur Verfügung (Chromium/Desktop)? */
+export function systemSchriftenVerfuegbar(): boolean {
+  return typeof window !== 'undefined' && typeof window.queryLocalFonts === 'function';
+}
+
+/**
+ * Liest die auf dem System installierten Schriftfamilien aus (z. B. die in Word
+ * verfügbaren Schriften). Erfordert eine einmalige Berechtigung; nur in
+ * Chromium/Electron verfügbar. Liefert eindeutige, sortierte Familiennamen.
+ */
+export async function ladeSystemSchriften(): Promise<string[]> {
+  if (!systemSchriftenVerfuegbar()) return [];
+  const fonts = await window.queryLocalFonts!();
+  const familien = new Set<string>();
+  for (const f of fonts) familien.add(f.family);
+  return [...familien].sort((a, b) => a.localeCompare(b, 'de'));
+}
+
+/**
+ * Fügt eine bereits installierte System-Schrift als auswählbare Vorlage-Schrift
+ * hinzu (keine Datei – es wird nur der Familienname referenziert).
+ */
+export async function systemSchriftHinzufuegen(name: string): Promise<FontEintrag> {
+  const fam = name.trim();
+  if (!fam) throw new Error('Bitte einen Schriftnamen angeben.');
+  const vorhanden = await db.fonts.where('name').equals(fam).first();
+  if (vorhanden) return vorhanden;
+  const eintrag: FontEintrag = { id: newId(), name: fam, mime: '', system: true };
+  await db.fonts.put(eintrag);
+  return eintrag;
 }

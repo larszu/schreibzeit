@@ -308,7 +308,7 @@ export function KnickblattView({
                 <option value="'Inter', system-ui, sans-serif">Serifenlos (LRS-freundlich)</option>
                 {fonts.map((f) => (
                   <option key={f.id} value={f.name}>
-                    {f.name} (eigene Schrift)
+                    {f.name} {f.system ? '(System-Schrift)' : '(eigene Schrift)'}
                   </option>
                 ))}
               </select>

@@ -3,10 +3,27 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/db';
 import { DEFAULT_EINSTELLUNGEN } from '@/db/repository';
-import type { Einstellungen, FontEintrag, Kind, Klasse, Lernwort, Uebungstext } from '@/types';
+import type {
+  Einstellungen,
+  FontEintrag,
+  Kind,
+  Klasse,
+  Lernwort,
+  Uebungstext,
+  Wortliste,
+} from '@/types';
 
 export function useFonts(): FontEintrag[] {
   return useLiveQuery(async () => db.fonts.toArray(), []) ?? [];
+}
+
+export function useWortlisten(): Wortliste[] {
+  return (
+    useLiveQuery(async () => {
+      const list = await db.wortlisten.toArray();
+      return list.sort((a, b) => a.label.localeCompare(b.label, 'de'));
+    }, []) ?? []
+  );
 }
 
 export function useKlassen(): Klasse[] {

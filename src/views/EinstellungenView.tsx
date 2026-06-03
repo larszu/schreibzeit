@@ -13,9 +13,22 @@ import {
   importBackup,
   type ImportModus,
 } from '@/services/backup';
-import { fontHinzufuegen, fontLoeschen } from '@/services/fonts';
-import { useFonts } from '@/state/hooks';
-import { GRUNDWORTSCHATZ_LISTEN } from '@/data/grundwortschatz';
+import {
+  fontHinzufuegen,
+  fontLoeschen,
+  systemSchriftenVerfuegbar,
+  ladeSystemSchriften,
+  systemSchriftHinzufuegen,
+} from '@/services/fonts';
+import { useFonts, useWortlisten } from '@/state/hooks';
+import {
+  GRUNDWORTSCHATZ_LISTEN,
+  parseWortliste,
+  wortlisteImportieren,
+  wortlisteAktualisieren,
+  wortlisteLoeschen,
+  grundwortschatzCacheLeeren,
+} from '@/data/grundwortschatz';
 import { LINEATUR_LABEL } from '@/core/knickblatt';
 import { newId } from '@/core/id';
 import { t } from '@/i18n/de';
@@ -36,7 +49,9 @@ export function EinstellungenModal({
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const fontFileRef = useRef<HTMLInputElement>(null);
+  const wortlisteRef = useRef<HTMLInputElement>(null);
   const fonts = useFonts();
+  const wortlisten = useWortlisten();
 
   const [importInfo, setImportInfo] = useState<string | null>(null);
   const [gespeichert, setGespeichert] = useState<string | null>(null);
@@ -48,6 +63,10 @@ export function EinstellungenModal({
   const [claudeKey, setClaudeKey] = useState(einstellungen.claudeApiKey);
   const [claudeModell, setClaudeModell] = useState(einstellungen.claudeModell);
   const [fontName, setFontName] = useState('');
+  const [systemFontName, setSystemFontName] = useState('');
+  const [systemFonts, setSystemFonts] = useState<string[]>([]);
+  // Ziel beim Wortlisten-Import: 'neu' = neue Liste, sonst die zu ersetzende ID.
+  const [importZiel, setImportZiel] = useState<string>('neu');
   // Freitextfelder lokal halten (sonst „verschluckt" der an die Datenbank
   // gebundene Wert beim schnellen Tippen Zeichen) und erst beim Verlassen speichern.
   const [lehrkraft, setLehrkraft] = useState(einstellungen.lehrkraftName);
@@ -95,6 +114,48 @@ export function EinstellungenModal({
     } catch (e) {
       flash(e instanceof Error ? e.message : 'Schriftart konnte nicht hinzugefügt werden.');
     }
+  }
+  async function systemSchriftenAnzeigen() {
+    try {
+      const liste = await ladeSystemSchriften();
+      setSystemFonts(liste);
+      flash(liste.length ? `${liste.length} installierte Schriften gefunden.` : 'Keine Schriften gefunden.');
+    } catch {
+      flash('Zugriff auf System-Schriften nicht möglich.');
+    }
+  }
+  async function systemSchriftSpeichern() {
+    try {
+      await systemSchriftHinzufuegen(systemFontName);
+      setSystemFontName('');
+      flash('System-Schrift hinzugefügt.');
+    } catch (e) {
+      flash(e instanceof Error ? e.message : 'Schrift konnte nicht hinzugefügt werden.');
+    }
+  }
+  async function wortlisteHochladen(file: File) {
+    try {
+      const woerter = parseWortliste(await file.text());
+      if (woerter.length === 0) {
+        flash('Keine Wörter in der Datei gefunden.');
+        return;
+      }
+      if (importZiel === 'neu') {
+        const label = file.name.replace(/\.[^.]+$/, '');
+        await wortlisteImportieren(label, woerter);
+        flash(`Wortliste „${label}" importiert (${woerter.length} Wörter).`);
+      } else {
+        await wortlisteAktualisieren(importZiel, woerter);
+        flash(`Wortliste aktualisiert (${woerter.length} Wörter).`);
+      }
+      setImportZiel('neu');
+    } catch (e) {
+      flash(e instanceof Error ? e.message : 'Import fehlgeschlagen.');
+    }
+  }
+  function listenAktualisieren() {
+    grundwortschatzCacheLeeren();
+    flash('Wortlisten neu geladen.');
   }
   async function exportieren() {
     downloadBackup(await exportAll());
@@ -321,6 +382,7 @@ export function EinstellungenModal({
                   <li key={f.id} className="flex items-center justify-between gap-2 px-3 py-1.5">
                     <span className="text-sm" style={{ fontFamily: f.name }}>
                       {f.name} – Aa Bb Som-mer
+                      {f.system && <span className="ml-1 text-xs text-ink-faint">(System)</span>}
                     </span>
                     <button
                       className="btn-ghost p-1 text-danger-500"
@@ -355,7 +417,53 @@ export function EinstellungenModal({
                 <IconUpload width={18} height={18} /> Schriftdatei wählen
               </button>
             </div>
-            <details className="mt-2 text-xs text-ink-soft">
+
+            <div className="mt-3 border-t border-paper-200 pt-3">
+              <p className="mb-2 text-sm text-ink-soft">
+                Schon installierte System-Schrift verwenden (z. B. aus Word) – ohne erneutes
+                Installieren. Name eingeben oder aus den installierten Schriften wählen.
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  className="input max-w-[14rem]"
+                  placeholder="Schriftname (z. B. Arial)"
+                  list="system-fonts"
+                  value={systemFontName}
+                  onChange={(e) => setSystemFontName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && systemFontName.trim() && void systemSchriftSpeichern()}
+                />
+                <datalist id="system-fonts">
+                  {systemFonts.map((f) => (
+                    <option key={f} value={f} />
+                  ))}
+                </datalist>
+                <button
+                  className="btn-secondary"
+                  onClick={systemSchriftSpeichern}
+                  disabled={!systemFontName.trim()}
+                >
+                  <IconCheck width={18} height={18} /> Hinzufügen
+                </button>
+                {systemSchriftenVerfuegbar() && (
+                  <button className="btn-ghost" onClick={systemSchriftenAnzeigen}>
+                    Installierte Schriften laden
+                  </button>
+                )}
+              </div>
+              {systemFontName.trim() && (
+                <p className="mt-2 text-lg" style={{ fontFamily: systemFontName }}>
+                  Vorschau: Am Montag schwingen wir Som-mer.
+                </p>
+              )}
+              {!systemSchriftenVerfuegbar() && (
+                <p className="mt-1 text-xs text-ink-faint">
+                  Tipp: Den exakten Schriftnamen eingeben. Das automatische Auflisten installierter
+                  Schriften unterstützt nur die Desktop-App bzw. Chrome.
+                </p>
+              )}
+            </div>
+
+            <details className="mt-3 text-xs text-ink-soft">
               <summary className="cursor-pointer text-brand-600">
                 Wo bekomme ich Grundschul-Schriften?
               </summary>
@@ -377,22 +485,103 @@ export function EinstellungenModal({
         </div>
       </Accordion>
 
-      <Accordion titel="Grundwortschatz (Bundesland)" beschreibung="Offizielle Wortlisten vorauswählen">
-        <select
-          className="input"
-          value={einstellungen.grundwortschatzId}
-          onChange={(e) => set('grundwortschatzId', e.target.value)}
-        >
-          <option value="">— keine —</option>
-          {GRUNDWORTSCHATZ_LISTEN.map((l) => (
-            <option key={l.id} value={l.id}>
-              {l.label}
-            </option>
-          ))}
-        </select>
-        <p className="mt-1 text-xs text-ink-faint">
-          Enthalten: Bayern (1/2, 3/4) und NRW. In der Kartei dann „Aus Grundwortschatz" nutzen.
-        </p>
+      <Accordion titel="Grundwortschatz (Bundesland)" beschreibung="Offizielle Wortlisten vorauswählen, eigene importieren">
+        <div className="space-y-4">
+          <div>
+            <label className="label" htmlFor="set-gws">
+              Vorausgewählte Liste
+            </label>
+            <select
+              id="set-gws"
+              className="input"
+              value={einstellungen.grundwortschatzId}
+              onChange={(e) => set('grundwortschatzId', e.target.value)}
+            >
+              <option value="">— keine —</option>
+              <optgroup label="Mitgeliefert">
+                {GRUNDWORTSCHATZ_LISTEN.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.label}
+                  </option>
+                ))}
+              </optgroup>
+              {wortlisten.length > 0 && (
+                <optgroup label="Eigene (importiert)">
+                  {wortlisten.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.label} ({l.woerter.length})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+            <p className="mt-1 text-xs text-ink-faint">
+              Mitgeliefert: Bayern (1/2, 3/4) und NRW. In der Kartei dann „Aus Grundwortschatz" nutzen.
+            </p>
+          </div>
+
+          <div className="border-t border-paper-200 pt-3">
+            <p className="mb-2 text-sm text-ink-soft">
+              Eigene Wortliste importieren – als <strong>.txt</strong> (ein Wort je Zeile) oder
+              <strong> .json</strong> (Array). Bleibt lokal gespeichert.
+            </p>
+            {wortlisten.length > 0 && (
+              <ul className="mb-2 divide-y divide-paper-200 rounded-lg border border-paper-200">
+                {wortlisten.map((l) => (
+                  <li key={l.id} className="flex items-center justify-between gap-2 px-3 py-1.5 text-sm">
+                    <span>
+                      {l.label} <span className="text-ink-faint">({l.woerter.length} Wörter)</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <button
+                        className="btn-ghost px-2 py-1 text-xs"
+                        onClick={() => {
+                          setImportZiel(l.id);
+                          wortlisteRef.current?.click();
+                        }}
+                        title="Datei wählen und Wörter dieser Liste ersetzen"
+                      >
+                        Aktualisieren
+                      </button>
+                      <button
+                        className="btn-ghost p-1 text-danger-500"
+                        onClick={() => void wortlisteLoeschen(l.id)}
+                        aria-label="Wortliste löschen"
+                      >
+                        <IconTrash width={15} height={15} />
+                      </button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <input
+              ref={wortlisteRef}
+              type="file"
+              accept=".txt,.json,text/plain,application/json"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void wortlisteHochladen(f);
+                e.target.value = '';
+              }}
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  setImportZiel('neu');
+                  wortlisteRef.current?.click();
+                }}
+              >
+                <IconUpload width={18} height={18} /> Wortliste importieren
+              </button>
+              <button className="btn-secondary" onClick={listenAktualisieren} title="Zwischengespeicherte Listen neu laden">
+                <IconCheck width={18} height={18} /> Listen aktualisieren
+              </button>
+            </div>
+          </div>
+        </div>
       </Accordion>
 
       <Accordion titel="Datenschutz" beschreibung="Pseudonyme &amp; lokale Speicherung">

@@ -10,6 +10,8 @@ interface Window {
     print?: () => Promise<boolean>;
     printToPDF?: () => Promise<boolean>;
   };
+  /** Local Font Access API (Chromium/Electron) – installierte Schriften lesen. */
+  queryLocalFonts?: () => Promise<{ family: string; fullName: string; postscriptName: string }[]>;
 }
 
 declare module 'hyphen/de' {

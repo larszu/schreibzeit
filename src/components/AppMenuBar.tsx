@@ -143,24 +143,14 @@ export function AppMenuBar() {
               Speichern
             </MenuItem>
             <MenuItem onClick={() => { close(); void tueSpeichernUnter(); }} kbd={`${mod}+⇧+S`}>
-              Speichern unter …
+              Speichern unter
             </MenuItem>
           </>
         )}
       </Dropdown>
       <Dropdown label="Hilfe">
         {(close) => (
-          <>
-            <MenuItem onClick={() => { close(); setAboutOffen(true); }}>Über Schreibzeit</MenuItem>
-            <MenuItem
-              onClick={() => {
-                close();
-                window.open('https://github.com/larszu/schreibzeit', '_blank', 'noreferrer');
-              }}
-            >
-              Projektseite (GitHub)
-            </MenuItem>
-          </>
+          <MenuItem onClick={() => { close(); setAboutOffen(true); }}>Über Schreibzeit</MenuItem>
         )}
       </Dropdown>
 
