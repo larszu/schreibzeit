@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { EmptyState } from '@/components/ui';
+import { EmptyState, Accordion } from '@/components/ui';
 import { IconPrint, IconCheck, IconPlus, IconTrash, IconGrip } from '@/components/icons';
 import { PrintPortal } from '@/components/print/PrintPortal';
 import { useFitScale } from '@/components/print/useFitScale';
@@ -356,7 +356,43 @@ export function KnickblattView({
         </div>
 
         <div className="card p-4">
-          <h3 className="mb-2 font-serif font-semibold text-ink">Spalten</h3>
+          <h3 className="mb-2 font-serif font-semibold text-ink">
+            Wörter ({auswahl.size}/{woerter.length})
+          </h3>
+          <div className="mb-2 flex flex-wrap gap-1">
+            {(
+              [
+                ['alle', 'Alle'],
+                ['keine', 'Keine'],
+                ['geuebt', 'wird geübt'],
+                ['neu', 'neu'],
+                ['neueste', 'Neueste'],
+                ['zufall', 'Zufall'],
+              ] as const
+            ).map(([p, label]) => (
+              <button key={p} className="btn-ghost py-1 text-xs" onClick={() => setPreset(p)}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <WortAuswahlListe
+            woerter={woerter}
+            istGewaehlt={(id) => auswahl.has(id)}
+            onToggle={(id) =>
+              setAuswahl((alt) => {
+                const neu = new Set(alt);
+                if (neu.has(id)) neu.delete(id);
+                else neu.add(id);
+                return neu;
+              })
+            }
+          />
+        </div>
+
+        <Accordion
+          titel="Spalten"
+          beschreibung={`${config.spalten.filter((s) => s.aktiv).length} aktiv · Reihenfolge & Symbole`}
+        >
           <ul className="space-y-1">
             {config.spalten.map((s) => {
               const def = SPALTEN_DEFS[s.typ];
@@ -425,41 +461,7 @@ export function KnickblattView({
             Zum Sortieren am Griff ziehen · Symbol/Titel anklicken zum Ändern. Vor „Auswendig
             schreiben" wird automatisch eine Falzlinie gedruckt.
           </p>
-        </div>
-
-        <div className="card p-4">
-          <h3 className="mb-2 font-serif font-semibold text-ink">
-            Wörter ({auswahl.size}/{woerter.length})
-          </h3>
-          <div className="mb-2 flex flex-wrap gap-1">
-            {(
-              [
-                ['alle', 'Alle'],
-                ['keine', 'Keine'],
-                ['geuebt', 'wird geübt'],
-                ['neu', 'neu'],
-                ['neueste', 'Neueste'],
-                ['zufall', 'Zufall'],
-              ] as const
-            ).map(([p, label]) => (
-              <button key={p} className="btn-ghost py-1 text-xs" onClick={() => setPreset(p)}>
-                {label}
-              </button>
-            ))}
-          </div>
-          <WortAuswahlListe
-            woerter={woerter}
-            istGewaehlt={(id) => auswahl.has(id)}
-            onToggle={(id) =>
-              setAuswahl((alt) => {
-                const neu = new Set(alt);
-                if (neu.has(id)) neu.delete(id);
-                else neu.add(id);
-                return neu;
-              })
-            }
-          />
-        </div>
+        </Accordion>
       </div>
 
       {/* Vorschau */}
