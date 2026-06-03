@@ -5,17 +5,13 @@ import {
   IconUsers,
   IconEdit,
   IconTrash,
-  IconKey,
   IconChevronsLeft,
   IconChevronsRight,
 } from './icons';
 import { Modal } from './ui';
-import { PrintPortal } from './print/PrintPortal';
-import { NamensschluesselDocument } from './print/NamensschluesselDocument';
 import { repository } from '@/db/repository';
 import { displayName } from '@/state/store';
 import { t } from '@/i18n/de';
-import { drucke } from '@/services/print';
 import { KLASSEN_FARBEN, farbeFuerIndex } from '@/core/farben';
 import type { Einstellungen, Kind, Klasse, Lernstand } from '@/types';
 
@@ -49,7 +45,6 @@ export function Sidebar({
   const [klasseFilter, setKlasseFilter] = useState<string>('alle');
   const [kindModal, setKindModal] = useState<{ offen: boolean; kind?: Kind }>({ offen: false });
   const [klassenModal, setKlassenModal] = useState(false);
-  const [schluesselDruck, setSchluesselDruck] = useState(false);
 
   const klasseFarbe = useMemo(() => {
     const m = new Map<string, string | undefined>();
@@ -192,19 +187,6 @@ export function Sidebar({
         )}
       </nav>
 
-      <div className="border-t border-paper-200 p-2">
-        <button
-          className="btn-ghost w-full justify-start"
-          onClick={() => {
-            setSchluesselDruck(true);
-            setTimeout(() => drucke(), 60);
-          }}
-          title="Zuordnung Kürzel ↔ Klarname zum Ausdrucken (offline aufbewahren)"
-        >
-          <IconKey width={18} height={18} /> Namensschlüssel drucken
-        </button>
-      </div>
-
       <KindModal
         state={kindModal}
         klassen={klassen}
@@ -215,17 +197,6 @@ export function Sidebar({
         }}
       />
       <KlassenModal offen={klassenModal} klassen={klassen} onClose={() => setKlassenModal(false)} />
-
-      {schluesselDruck && (
-        <PrintPortal solo>
-          <NamensschluesselDocument
-            kinder={kinder}
-            klassen={klassen}
-            schule={einstellungen.schulName || undefined}
-            lehrkraft={einstellungen.lehrkraftName || undefined}
-          />
-        </PrintPortal>
-      )}
     </aside>
   );
 }

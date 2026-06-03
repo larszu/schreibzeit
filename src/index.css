@@ -97,8 +97,10 @@ body,
   }
 
   /* Die gesamte App-Oberfläche ausblenden – #root nimmt sonst (height:100%)
-     eine ganze leere Seite ein und schiebt den Druckbereich nach hinten. */
-  body > #root {
+     eine ganze leere Seite ein und schiebt den Druckbereich nach hinten.
+     Auch offene Dialoge (Portale direkt an <body>, z. B. Einstellungen)
+     werden so beim Drucken ausgeblendet; nur der Druckbereich bleibt. */
+  body > *:not(.print-root) {
     display: none !important;
   }
 

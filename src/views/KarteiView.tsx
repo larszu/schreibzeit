@@ -35,6 +35,9 @@ const TTS_OK = ttsVerfuegbar();
 
 const STATUS_REIHENFOLGE: WortStatus[] = ['neu', 'wird_geuebt', 'sitzt'];
 
+/** Reiter im „Wörter hinzufügen"-Popup. */
+type AddTab = 'einzeln' | 'text' | 'gws';
+
 export function KarteiView({
   kind,
   einstellungen,
@@ -45,8 +48,11 @@ export function KarteiView({
   const woerter = useLernwoerter(kind.id);
   const [filter, setFilter] = useState<WortStatus | 'alle'>('alle');
   const [editor, setEditor] = useState<{ offen: boolean; wort?: Lernwort }>({ offen: false });
-  const [extraktorOffen, setExtraktorOffen] = useState(false);
-  const [gwsOffen, setGwsOffen] = useState(false);
+  // Gemeinsames „Wörter hinzufügen"-Popup mit Reitern (einzeln / Text / Grundwortschatz).
+  const [addModal, setAddModal] = useState<{ offen: boolean; tab: AddTab }>({
+    offen: false,
+    tab: 'einzeln',
+  });
   const [diktatOffen, setDiktatOffen] = useState(false);
   const [uebenOffen, setUebenOffen] = useState(false);
   const [auswahl, setAuswahl] = useState<Set<string>>(new Set());
@@ -81,14 +87,11 @@ export function KarteiView({
   return (
     <div className="max-w-4xl space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <button className="btn-primary" onClick={() => setEditor({ offen: true })}>
-          <IconPlus width={18} height={18} /> Wort hinzufügen
-        </button>
-        <button className="btn-secondary" onClick={() => setExtraktorOffen(true)}>
-          <IconSparkles width={18} height={18} /> Aus Text herauspicken
-        </button>
-        <button className="btn-secondary" onClick={() => setGwsOffen(true)}>
-          <IconBook width={18} height={18} /> Aus Grundwortschatz
+        <button
+          className="btn-primary"
+          onClick={() => setAddModal({ offen: true, tab: 'einzeln' })}
+        >
+          <IconPlus width={18} height={18} /> Wörter hinzufügen
         </button>
         {woerter.length > 0 && (
           <button
@@ -175,7 +178,10 @@ export function KarteiView({
           titel="Noch keine Lernwörter"
           text="Fügen Sie Wörter manuell hinzu oder picken Sie sie aus einem eingefügten Kindertext heraus."
         >
-          <button className="btn-primary" onClick={() => setExtraktorOffen(true)}>
+          <button
+            className="btn-primary"
+            onClick={() => setAddModal({ offen: true, tab: 'text' })}
+          >
             <IconSparkles width={18} height={18} /> Aus Text herauspicken
           </button>
         </EmptyState>
@@ -198,19 +204,12 @@ export function KarteiView({
         kindId={kind.id}
         onClose={() => setEditor({ offen: false })}
       />
-      <TextExtraktor
-        offen={extraktorOffen}
+      <WortHinzufuegenModal
+        state={addModal}
         kind={kind}
         einstellungen={einstellungen}
         vorhandene={woerter}
-        onClose={() => setExtraktorOffen(false)}
-      />
-      <GrundwortschatzModal
-        offen={gwsOffen}
-        kind={kind}
-        einstellungen={einstellungen}
-        vorhandene={woerter}
-        onClose={() => setGwsOffen(false)}
+        onClose={() => setAddModal((a) => ({ ...a, offen: false }))}
       />
       <DiktatModal offen={diktatOffen} woerter={gefiltert} onClose={() => setDiktatOffen(false)} />
       <UebenModal offen={uebenOffen} woerter={woerter} onClose={() => setUebenOffen(false)} />
@@ -337,6 +336,7 @@ function LernwortZeile({
   );
 }
 
+/** Bearbeiten eines vorhandenen Lernworts (eigener Dialog). */
 function LernwortEditor({
   state,
   kindId,
@@ -346,7 +346,35 @@ function LernwortEditor({
   kindId: string;
   onClose: () => void;
 }) {
-  const vorhanden = state.wort;
+  return (
+    <Modal
+      offen={state.offen}
+      titel={state.wort ? 'Lernwort bearbeiten' : 'Lernwort hinzufügen'}
+      onClose={onClose}
+      weit
+    >
+      <LernwortForm vorhanden={state.wort} kindId={kindId} onClose={onClose} />
+    </Modal>
+  );
+}
+
+/**
+ * Formular für ein einzelnes Lernwort. Ohne Modalrahmen, damit es sowohl im
+ * Bearbeiten-Dialog als auch im „Wörter hinzufügen"-Popup (Reiter „Einzeln")
+ * verwendet werden kann. Im Anlege-Modus bleibt es nach dem Speichern offen,
+ * damit mehrere Wörter zügig nacheinander erfasst werden können.
+ */
+function LernwortForm({
+  vorhanden,
+  kindId,
+  onClose,
+}: {
+  vorhanden?: Lernwort;
+  kindId: string;
+  onClose: () => void;
+}) {
+  const wortRef = useRef<HTMLInputElement>(null);
+  const [zuletzt, setZuletzt] = useState<string | null>(null);
   const [wort, setWort] = useState('');
   const [artikel, setArtikel] = useState('');
   const [wortart, setWortart] = useState('');
@@ -356,8 +384,8 @@ function LernwortEditor({
   const [quelle, setQuelle] = useState('');
   const [notiz, setNotiz] = useState('');
 
+  // Felder initialisieren (beim Mounten und falls sich das bearbeitete Wort ändert).
   useEffect(() => {
-    if (!state.offen) return;
     const w = vorhanden;
     setWort(w?.wort ?? '');
     setArtikel(w?.artikel ?? '');
@@ -367,7 +395,18 @@ function LernwortEditor({
     setStatus(w?.status ?? 'neu');
     setQuelle(w?.quelle ?? '');
     setNotiz(w?.notiz ?? '');
-  }, [state.offen, vorhanden]);
+  }, [vorhanden]);
+
+  function felderLeeren() {
+    setWort('');
+    setArtikel('');
+    setWortart('');
+    setBreaks([]);
+    setMerkstellen([]);
+    setStatus('neu');
+    setQuelle('');
+    setNotiz('');
+  }
 
   // Beim Tippen eines neuen Wortes automatisch Vorschläge aus dem Wörterbuch
   // erzeugen (korrekte Silbentrennung; Artikel, falls bekannt).
@@ -407,19 +446,18 @@ function LernwortEditor({
     };
     if (vorhanden) {
       await repository.updateLernwort(vorhanden.id, { wort: wort.trim(), ...daten });
+      onClose();
     } else {
-      await repository.addLernwort(kindId, wort.trim(), daten);
+      // Anlege-Modus: offen lassen und für das nächste Wort zurücksetzen.
+      const gespeichert = wort.trim();
+      await repository.addLernwort(kindId, gespeichert, daten);
+      setZuletzt(gespeichert);
+      felderLeeren();
+      wortRef.current?.focus();
     }
-    onClose();
   }
 
   return (
-    <Modal
-      offen={state.offen}
-      titel={vorhanden ? 'Lernwort bearbeiten' : 'Lernwort hinzufügen'}
-      onClose={onClose}
-      weit
-    >
       <div className="space-y-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr]">
           <div>
@@ -428,10 +466,17 @@ function LernwortEditor({
             </label>
             <input
               id="lw-wort"
+              ref={wortRef}
               className="input font-serif text-lg"
               value={wort}
               autoFocus
               onChange={(e) => onWortChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void speichern();
+                }
+              }}
             />
           </div>
           <div>
@@ -542,16 +587,21 @@ function LernwortEditor({
           />
         </div>
 
-        <div className="flex justify-end gap-2 pt-1">
+        <div className="flex items-center justify-end gap-2 pt-1">
+          {zuletzt && !vorhanden && (
+            <span className="mr-auto flex items-center gap-1 text-sm text-brand-700">
+              <IconCheck width={16} height={16} /> „{zuletzt}" hinzugefügt
+            </span>
+          )}
           <button className="btn-secondary" onClick={onClose}>
-            {t.common.abbrechen}
+            {vorhanden ? t.common.abbrechen : t.common.schliessen}
           </button>
           <button className="btn-primary" onClick={speichern} disabled={!wort.trim()}>
-            <IconCheck width={18} height={18} /> {t.common.speichern}
+            <IconCheck width={18} height={18} />{' '}
+            {vorhanden ? t.common.speichern : 'Hinzufügen'}
           </button>
         </div>
       </div>
-    </Modal>
   );
 }
 
@@ -621,18 +671,14 @@ function ClickbareBuchstaben({
   );
 }
 
-function TextExtraktor({
-  offen,
+function TextExtraktorBody({
   kind,
   einstellungen,
   vorhandene,
-  onClose,
 }: {
-  offen: boolean;
   kind: Kind;
   einstellungen: Einstellungen;
   vorhandene: Lernwort[];
-  onClose: () => void;
 }) {
   const [text, setText] = useState('');
   const [hinzugefuegt, setHinzugefuegt] = useState<Set<string>>(new Set());
@@ -642,15 +688,12 @@ function TextExtraktor({
   const [fotoGross, setFotoGross] = useState(false);
   const fotoRef = useRef<HTMLInputElement>(null);
 
+  // Beim Verlassen des Reiters eine evtl. erzeugte Foto-Vorschau freigeben.
   useEffect(() => {
-    if (offen) {
-      setText('');
-      setHinzugefuegt(new Set());
-      setOcrInfo(null);
-      setFotoUrl(null);
-      setFotoGross(false);
-    }
-  }, [offen]);
+    return () => {
+      if (fotoUrl) URL.revokeObjectURL(fotoUrl);
+    };
+  }, [fotoUrl]);
 
   const tokens = useMemo(() => tokenize(text), [text]);
   const existierende = useMemo(
@@ -706,7 +749,6 @@ function TextExtraktor({
   }
 
   return (
-    <Modal offen={offen} titel="Wörter aus Text herauspicken" onClose={onClose} weit>
       <div className="space-y-3">
         <p className="text-sm text-ink-soft">
           Fügen Sie den (abgetippten) Text des Kindes ein oder laden Sie ein Foto hoch – klicken Sie
@@ -797,43 +839,28 @@ function TextExtraktor({
             />
           </div>
         )}
-        <div className="flex justify-end">
-          <button className="btn-primary" onClick={onClose}>
-            Fertig
-          </button>
-        </div>
       </div>
-    </Modal>
   );
 }
 
-function GrundwortschatzModal({
-  offen,
+function GrundwortschatzBody({
   kind,
   einstellungen,
   vorhandene,
-  onClose,
 }: {
-  offen: boolean;
   kind: Kind;
   einstellungen: Einstellungen;
   vorhandene: Lernwort[];
-  onClose: () => void;
 }) {
-  const [listeId, setListeId] = useState('');
+  const [listeId, setListeId] = useState(
+    () => einstellungen.grundwortschatzId || GRUNDWORTSCHATZ_LISTEN[0].id,
+  );
   const [woerter, setWoerter] = useState<string[]>([]);
   const [hinzugefuegt, setHinzugefuegt] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (offen) {
-      setHinzugefuegt(new Set());
-      setListeId(einstellungen.grundwortschatzId || GRUNDWORTSCHATZ_LISTEN[0].id);
-    }
-  }, [offen, einstellungen.grundwortschatzId]);
-
-  useEffect(() => {
-    if (offen && listeId) void ladeGrundwortschatz(listeId).then(setWoerter);
-  }, [offen, listeId]);
+    if (listeId) void ladeGrundwortschatz(listeId).then(setWoerter);
+  }, [listeId]);
 
   const existierende = useMemo(
     () => buildExistingSet(vorhandene.map((w) => w.wort)),
@@ -865,7 +892,6 @@ function GrundwortschatzModal({
   }
 
   return (
-    <Modal offen={offen} titel="Aus Grundwortschatz hinzufügen" onClose={onClose} weit>
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <select
@@ -898,12 +924,63 @@ function GrundwortschatzModal({
             onAdd={uebernehmen}
           />
         </div>
-        <div className="flex justify-end">
-          <button className="btn-primary" onClick={onClose}>
-            Fertig
-          </button>
-        </div>
       </div>
+  );
+}
+
+/** Gemeinsames Popup mit drei Wegen, Wörter hinzuzufügen. */
+function WortHinzufuegenModal({
+  state,
+  kind,
+  einstellungen,
+  vorhandene,
+  onClose,
+}: {
+  state: { offen: boolean; tab: AddTab };
+  kind: Kind;
+  einstellungen: Einstellungen;
+  vorhandene: Lernwort[];
+  onClose: () => void;
+}) {
+  const [tab, setTab] = useState<AddTab>(state.tab);
+  // Beim Öffnen den gewünschten Reiter setzen (z. B. „Aus Text" aus dem Leerzustand).
+  useEffect(() => {
+    if (state.offen) setTab(state.tab);
+  }, [state.offen, state.tab]);
+
+  const reiter: { id: AddTab; label: string; icon: typeof IconPlus }[] = [
+    { id: 'einzeln', label: 'Einzeln', icon: IconPlus },
+    { id: 'text', label: 'Aus Text', icon: IconSparkles },
+    { id: 'gws', label: 'Aus Grundwortschatz', icon: IconBook },
+  ];
+
+  return (
+    <Modal offen={state.offen} titel="Wörter hinzufügen" onClose={onClose} weit>
+      <div className="mb-4 flex flex-wrap gap-1 rounded-lg border border-paper-300 bg-white p-0.5 text-sm">
+        {reiter.map((r) => {
+          const Icon = r.icon;
+          const aktiv = tab === r.id;
+          return (
+            <button
+              key={r.id}
+              onClick={() => setTab(r.id)}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-colors ${
+                aktiv ? 'bg-brand-500 text-white' : 'text-ink-soft hover:bg-paper-100'
+              }`}
+            >
+              <Icon width={16} height={16} /> {r.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {tab === 'einzeln' && <LernwortForm kindId={kind.id} onClose={onClose} />}
+      {tab === 'text' && (
+        <TextExtraktorBody kind={kind} einstellungen={einstellungen} vorhandene={vorhandene} />
+      )}
+      {tab === 'gws' && (
+        <GrundwortschatzBody kind={kind} einstellungen={einstellungen} vorhandene={vorhandene} />
+      )}
     </Modal>
   );
 }

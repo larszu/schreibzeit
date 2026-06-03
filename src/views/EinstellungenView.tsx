@@ -1,7 +1,10 @@
 import { useRef, useState } from 'react';
-import { IconDownload, IconUpload, IconTrash, IconCheck } from '@/components/icons';
+import { IconDownload, IconUpload, IconTrash, IconCheck, IconKey } from '@/components/icons';
 import { Accordion } from '@/components/ui';
 import { LineaturCropper } from '@/components/LineaturCropper';
+import { PrintPortal } from '@/components/print/PrintPortal';
+import { NamensschluesselDocument } from '@/components/print/NamensschluesselDocument';
+import { drucke } from '@/services/print';
 import { repository } from '@/db/repository';
 import {
   exportAll,
@@ -16,15 +19,19 @@ import { GRUNDWORTSCHATZ_LISTEN } from '@/data/grundwortschatz';
 import { LINEATUR_LABEL } from '@/core/knickblatt';
 import { newId } from '@/core/id';
 import { t } from '@/i18n/de';
-import type { CustomLineatur, Einstellungen, Lineatur } from '@/types';
+import type { CustomLineatur, Einstellungen, Kind, Klasse, Lineatur } from '@/types';
 
 const LINEATUREN: Lineatur[] = ['klasse1', 'klasse2', 'klasse3', 'klasse4', 'haus'];
 
 export function EinstellungenModal({
   einstellungen,
+  kinder,
+  klassen,
   onClose,
 }: {
   einstellungen: Einstellungen;
+  kinder: Kind[];
+  klassen: Klasse[];
   onClose: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -33,6 +40,7 @@ export function EinstellungenModal({
 
   const [importInfo, setImportInfo] = useState<string | null>(null);
   const [gespeichert, setGespeichert] = useState<string | null>(null);
+  const [schluesselDruck, setSchluesselDruck] = useState(false);
 
   // API-Schlüssel/Modelle werden erst per „Speichern"-Button übernommen.
   const [geminiKey, setGeminiKey] = useState(einstellungen.geminiApiKey);
@@ -120,7 +128,7 @@ export function EinstellungenModal({
         </div>
       )}
 
-      <Accordion titel="KI &amp; Texterkennung" beschreibung="Übungstexte und Foto-Texterkennung" defaultOpen>
+      <Accordion titel="KI &amp; Texterkennung" beschreibung="Übungstexte und Foto-Texterkennung">
         <div className="space-y-3">
           <div>
             <label className="label" htmlFor="set-key">
@@ -399,9 +407,20 @@ export function EinstellungenModal({
         </label>
         <p className="mt-2 text-xs text-ink-faint">{t.datenschutz.text}</p>
         <p className="mt-1 text-xs text-ink-faint">
-          Tipp: Kinder mit Nummern/Decknamen anlegen und den „Namensschlüssel" (Seitenleiste) auf
-          Papier ausfüllen – so liegt kein Klarname in der App.
+          Tipp: Kinder mit Nummern/Decknamen anlegen und den Namensschlüssel auf Papier ausfüllen –
+          so liegt kein Klarname in der App.
         </p>
+        <button
+          className="btn-secondary mt-3"
+          onClick={() => {
+            setSchluesselDruck(true);
+            setTimeout(() => drucke(), 60);
+          }}
+          disabled={kinder.length === 0}
+          title="Zuordnung Kürzel ↔ Klarname zum Ausdrucken (offline aufbewahren)"
+        >
+          <IconKey width={18} height={18} /> Namensschlüssel drucken
+        </button>
       </Accordion>
 
       <Accordion titel="Datensicherung" beschreibung="Backup exportieren/importieren">
@@ -455,6 +474,17 @@ export function EinstellungenModal({
           <IconTrash width={16} height={16} /> Alle Daten löschen
         </button>
       </div>
+
+      {schluesselDruck && (
+        <PrintPortal solo>
+          <NamensschluesselDocument
+            kinder={kinder}
+            klassen={klassen}
+            schule={einstellungen.schulName || undefined}
+            lehrkraft={einstellungen.lehrkraftName || undefined}
+          />
+        </PrintPortal>
+      )}
     </div>
   );
 }

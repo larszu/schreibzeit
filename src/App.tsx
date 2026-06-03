@@ -220,7 +220,12 @@ export default function App() {
         onClose={() => setEinstellungenOffen(false)}
         weit
       >
-        <EinstellungenModal einstellungen={einstellungen} onClose={() => setEinstellungenOffen(false)} />
+        <EinstellungenModal
+          einstellungen={einstellungen}
+          kinder={kinder}
+          klassen={klassen}
+          onClose={() => setEinstellungenOffen(false)}
+        />
       </Modal>
 
       {!einstellungen.datenschutzBestaetigt && <DatenschutzBanner />}
