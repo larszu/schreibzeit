@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Sidebar } from './components/Sidebar';
+import { Sidebar, SidebarRail } from './components/Sidebar';
 import { AppMenuBar } from './components/AppMenuBar';
 import { KarteiView } from './views/KarteiView';
 import { KnickblattView } from './views/KnickblattView';
@@ -13,7 +13,6 @@ import {
   IconCards,
   IconFold,
   IconMenu,
-  IconPanelLeft,
   IconSparkles,
 } from './components/icons';
 import { useEinstellungen, useKinder, useKlassen } from './state/hooks';
@@ -96,11 +95,25 @@ export default function App() {
           }`}
           onClick={() => setSidebarOffen(false)}
         />
+        {/* Desktop eingeklappt: schmale Icon-Leiste statt komplettem Ausblenden,
+            damit die Kinder sichtbar bleiben und das Ausklappen offensichtlich ist. */}
+        {sidebarCollapsed && !sidebarOffen && (
+          <div className="hidden lg:block">
+            <SidebarRail
+              kinder={kinder}
+              klassen={klassen}
+              einstellungen={einstellungen}
+              selectedKindId={selectedKindId}
+              onSelect={(id) => setSelectedKind(id)}
+              onExpand={() => setSidebarCollapsed(false)}
+            />
+          </div>
+        )}
         {(sidebarOffen || !sidebarCollapsed) && (
           <div
             className={`fixed inset-y-0 left-0 z-40 max-w-[85vw] transform transition-transform lg:static lg:translate-x-0 ${
               sidebarOffen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-            }`}
+            } ${sidebarCollapsed ? 'lg:hidden' : ''}`}
             style={{ width: sidebarWidth }}
           >
             <div className="relative h-full">
@@ -113,6 +126,7 @@ export default function App() {
                   setSelectedKind(id);
                   setSidebarOffen(false);
                 }}
+                onCollapse={() => setSidebarCollapsed(true)}
               />
               {/* Breite ziehen (nur Desktop) */}
               <div
@@ -135,14 +149,6 @@ export default function App() {
               aria-label="Menü öffnen"
             >
               <IconMenu />
-            </button>
-            <button
-              className="btn-ghost hidden p-2 lg:inline-flex"
-              onClick={() => setSidebarCollapsed((c) => !c)}
-              aria-label={sidebarCollapsed ? 'Seitenleiste einblenden' : 'Seitenleiste ausblenden'}
-              title={sidebarCollapsed ? 'Seitenleiste einblenden' : 'Seitenleiste ausblenden'}
-            >
-              <IconPanelLeft />
             </button>
             {kind ? (
               <div className="min-w-0">

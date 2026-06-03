@@ -109,6 +109,18 @@ export const IconPanelLeft = (p: P) => (
     <path d="M9 4v16" />
   </svg>
 );
+export const IconPanelLeftClose = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <path d="M9 4v16M16 9l-3 3 3 3" />
+  </svg>
+);
+export const IconPanelLeftOpen = (p: P) => (
+  <svg {...base(p)}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <path d="M9 4v16M14 9l3 3-3 3" />
+  </svg>
+);
 export const IconSpeaker = (p: P) => (
   <svg {...base(p)}>
     <path d="M11 5 6 9H2v6h4l5 4V5z" />

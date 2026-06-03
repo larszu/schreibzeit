@@ -6,6 +6,8 @@ import {
   IconEdit,
   IconTrash,
   IconKey,
+  IconPanelLeftClose,
+  IconPanelLeftOpen,
 } from './icons';
 import { Modal } from './ui';
 import { PrintPortal } from './print/PrintPortal';
@@ -19,18 +21,29 @@ import type { Einstellungen, Kind, Klasse, Lernstand } from '@/types';
 
 const LERNSTAENDE: Lernstand[] = ['klasse1', 'klasse2', 'klasse3', 'klasse4', 'foerder', 'lrs'];
 
+/** Initialen (max. 2) für die kompakte Leiste. */
+function initialen(name: string): string {
+  const teile = name.trim().split(/\s+/).filter(Boolean);
+  if (teile.length === 0) return '?';
+  if (teile.length === 1) return teile[0].slice(0, 2).toUpperCase();
+  return (teile[0][0] + teile[teile.length - 1][0]).toUpperCase();
+}
+
 export function Sidebar({
   kinder,
   klassen,
   einstellungen,
   selectedKindId,
   onSelect,
+  onCollapse,
 }: {
   kinder: Kind[];
   klassen: Klasse[];
   einstellungen: Einstellungen;
   selectedKindId?: string;
   onSelect: (id: string) => void;
+  /** Nur Desktop: Leiste zur schmalen Icon-Leiste einklappen. */
+  onCollapse?: () => void;
 }) {
   const [suche, setSuche] = useState('');
   const [klasseFilter, setKlasseFilter] = useState<string>('alle');
@@ -55,8 +68,21 @@ export function Sidebar({
 
   return (
     <aside className="flex h-full flex-col border-r border-paper-200 bg-paper-50">
-      {/* Kein Logo/Titel mehr – steht bereits in der Menüleiste oben links. */}
-      <div className="px-3 pt-3">
+      {/* Kopfzeile: Bereichslabel + Einklappen (kein App-Titel, der steht oben in der Menüleiste). */}
+      <div className="flex items-center justify-between px-3 pt-2.5">
+        <span className="text-xs font-semibold uppercase tracking-wide text-ink-faint">Kinder</span>
+        {onCollapse && (
+          <button
+            className="btn-ghost hidden p-1.5 lg:inline-flex"
+            onClick={onCollapse}
+            aria-label="Seitenleiste einklappen"
+            title="Seitenleiste einklappen"
+          >
+            <IconPanelLeftClose width={18} height={18} />
+          </button>
+        )}
+      </div>
+      <div className="px-3 pt-2">
         <div className="relative">
           <IconSearch
             width={16}
@@ -200,6 +226,69 @@ export function Sidebar({
           />
         </PrintPortal>
       )}
+    </aside>
+  );
+}
+
+/**
+ * Schmale Icon-Leiste im eingeklappten Zustand (nur Desktop). Hält die App
+ * orientiert: man sieht die Kinder weiter als farbige Initialen und kann
+ * direkt umschalten, ohne erst auszuklappen.
+ */
+export function SidebarRail({
+  kinder,
+  klassen,
+  einstellungen,
+  selectedKindId,
+  onSelect,
+  onExpand,
+}: {
+  kinder: Kind[];
+  klassen: Klasse[];
+  einstellungen: Einstellungen;
+  selectedKindId?: string;
+  onSelect: (id: string) => void;
+  onExpand: () => void;
+}) {
+  const klasseFarbe = useMemo(() => {
+    const m = new Map<string, string | undefined>();
+    klassen.forEach((c) => m.set(c.id, c.farbe));
+    return m;
+  }, [klassen]);
+
+  return (
+    <aside className="flex h-full w-14 flex-col items-center border-r border-paper-200 bg-paper-50 py-2.5">
+      <button
+        className="btn-ghost p-1.5"
+        onClick={onExpand}
+        aria-label="Seitenleiste ausklappen"
+        title="Kinderliste ausklappen"
+      >
+        <IconPanelLeftOpen width={18} height={18} />
+      </button>
+      <div className="my-2 h-px w-7 bg-paper-200" />
+      <nav className="flex w-full flex-1 flex-col items-center gap-1 overflow-y-auto px-1.5 py-0.5">
+        {kinder.map((kind) => {
+          const aktiv = kind.id === selectedKindId;
+          const farbe = kind.klasseId ? klasseFarbe.get(kind.klasseId) || '#c9c4b5' : '#d8d4c8';
+          const label = displayName(kind.name, einstellungen.nurInitialen);
+          return (
+            <button
+              key={kind.id}
+              onClick={() => onSelect(kind.id)}
+              title={label}
+              aria-label={label}
+              aria-current={aktiv ? 'true' : undefined}
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-shadow ${
+                aktiv ? 'ring-2 ring-brand-500 ring-offset-1 ring-offset-paper-50' : 'hover:ring-2 hover:ring-paper-300'
+              }`}
+              style={{ backgroundColor: farbe, color: '#1c1a14' }}
+            >
+              {initialen(label)}
+            </button>
+          );
+        })}
+      </nav>
     </aside>
   );
 }
