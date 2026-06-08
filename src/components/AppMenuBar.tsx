@@ -99,7 +99,10 @@ export function AppMenuBar() {
     );
     try {
       const res = await oeffnen(ersetzen ? 'ersetzen' : 'zusammenfuehren');
-      if (res) zeige(`Geöffnet: ${res.name} (${res.kinder} Kinder, ${res.woerter} Wörter)`);
+      if (res) {
+        const warnung = res.verworfen > 0 ? ` – ${res.verworfen} Einträge konnten nicht gelesen werden` : '';
+        zeige(`Geöffnet: ${res.name} (${res.kinder} Kinder, ${res.woerter} Wörter)${warnung}`);
+      }
     } catch (e) {
       zeige(e instanceof Error ? e.message : 'Öffnen fehlgeschlagen.');
     }

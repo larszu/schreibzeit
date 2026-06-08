@@ -11,6 +11,7 @@ import {
   downloadBackup,
   parseBackup,
   importBackup,
+  verworfenGesamt,
   type ImportModus,
 } from '@/services/backup';
 import { fontHinzufuegen, fontLoeschen, leseSchriftname, EINGEBAUTE_SCHRIFTEN } from '@/services/fonts';
@@ -139,13 +140,15 @@ export function EinstellungenModal({
   }
   async function importieren(datei: File, modus: ImportModus) {
     try {
-      const backup = parseBackup(await datei.text());
+      const { backup, bericht } = parseBackup(await datei.text());
       if (modus === 'ersetzen' && !confirm('Achtung: Alle vorhandenen Daten werden ersetzt. Fortfahren?')) {
         return;
       }
       await importBackup(backup, modus);
+      const verworfen = verworfenGesamt(bericht);
+      const warnung = verworfen > 0 ? ` ${verworfen} Einträge konnten nicht gelesen werden und wurden übersprungen.` : '';
       setImportInfo(
-        `Import erfolgreich: ${backup.daten.kinder.length} Kinder, ${backup.daten.lernwoerter.length} Wörter.`,
+        `Import erfolgreich: ${backup.daten.kinder.length} Kinder, ${backup.daten.lernwoerter.length} Wörter.${warnung}`,
       );
     } catch (e) {
       setImportInfo(e instanceof Error ? e.message : 'Import fehlgeschlagen.');

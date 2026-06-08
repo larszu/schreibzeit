@@ -72,4 +72,24 @@ describe('Backup – Export/Import über die Datenbank', () => {
     expect(await db.kinder.count()).toBe(2);
     expect(await db.lernwoerter.count()).toBe(2);
   });
+
+  it('vergibt bei ID-Kollision neue IDs statt zu überschreiben (Zusammenführen)', async () => {
+    const kind = await repository.saveKind({ name: 'Lia' });
+    await repository.addLernwort(kind.id, 'Sonne');
+    const backup = await exportAll(); // gleiche IDs wie die noch vorhandenen Daten
+
+    // Ohne Löschen erneut zusammenführen → Kollision auf allen IDs.
+    await importBackup(backup, 'zusammenfuehren');
+
+    // Nichts überschrieben: beide Kopien existieren …
+    expect(await db.kinder.count()).toBe(2);
+    expect(await db.lernwoerter.count()).toBe(2);
+    // … und die referentielle Integrität bleibt erhalten: jedes Wort zeigt
+    // auf ein existierendes Kind.
+    const kindIds = new Set((await db.kinder.toArray()).map((k) => k.id));
+    const woerter = await db.lernwoerter.toArray();
+    expect(woerter.every((w) => kindIds.has(w.kindId))).toBe(true);
+    // Die neu importierte Kopie hat ein anderes Kind referenziert als die alte.
+    expect(new Set(woerter.map((w) => w.kindId)).size).toBe(2);
+  });
 });

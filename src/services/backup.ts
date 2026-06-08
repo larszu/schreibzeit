@@ -1,10 +1,14 @@
 import { db } from '@/db/db';
+import { newId } from '@/core/id';
 import type {
   Einstellungen,
   Kind,
   Klasse,
+  Lernstand,
   Lernwort,
+  TextArt,
   Uebungstext,
+  WortStatus,
 } from '@/types';
 
 export const BACKUP_VERSION = 1;
@@ -26,6 +30,17 @@ export interface Backup {
 
 export type ImportModus = 'zusammenfuehren' | 'ersetzen';
 
+/** Anzahl der beim Einlesen verworfenen Datensätze je Tabelle. */
+export interface ImportBericht {
+  verworfen: { klassen: number; kinder: number; lernwoerter: number; uebungstexte: number };
+}
+
+/** Ergebnis von {@link parseBackup}: bereinigte Daten plus Verlust-Bericht. */
+export interface ParseErgebnis {
+  backup: Backup;
+  bericht: ImportBericht;
+}
+
 /** Baut ein Backup-Objekt aus den übergebenen Daten (rein, testbar). */
 export function buildBackup(daten: BackupDaten): Backup {
   return {
@@ -36,11 +51,18 @@ export function buildBackup(daten: BackupDaten): Backup {
   };
 }
 
-// ── Validierung einzelner Records ──────────────────────────────────────
+// ── Normalisierung einzelner Records ───────────────────────────────────
+//
+// Statt Datensätze bei kleinen Mängeln komplett zu verwerfen, werden
+// unkritische Felder auf sinnvolle Standardwerte gesetzt (z. B. unbekannter
+// Lernstand → 'klasse2'). Nur wenn Identitätsfelder (id, Eltern-id, Name)
+// fehlen, ist ein Record unbrauchbar und wird verworfen (→ null). So gehen
+// beim Wiederherstellen so wenig Daten wie möglich verloren.
 
-const LERNSTAND_WERTE = new Set(['klasse1', 'klasse2', 'klasse3', 'klasse4', 'foerder', 'lrs']);
-const WORT_STATUS_WERTE = new Set(['neu', 'wird_geuebt', 'sitzt']);
-const TEXTART_WERTE = new Set(['geschichte', 'lueckentext', 'quatschsaetze']);
+const LERNSTAND_WERTE = new Set<Lernstand>(['klasse1', 'klasse2', 'klasse3', 'klasse4', 'foerder', 'lrs']);
+const WORT_STATUS_WERTE = new Set<WortStatus>(['neu', 'wird_geuebt', 'sitzt']);
+const TEXTART_WERTE = new Set<TextArt>(['geschichte', 'lueckentext', 'quatschsaetze']);
+const ARTIKEL_WERTE = new Set(['der', 'die', 'das', '']);
 
 function isString(v: unknown): v is string {
   return typeof v === 'string';
@@ -48,61 +70,94 @@ function isString(v: unknown): v is string {
 function isNumber(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v);
 }
-
-function validiereKlasse(r: unknown): r is Klasse {
-  if (!r || typeof r !== 'object') return false;
-  const k = r as Record<string, unknown>;
-  return isString(k.id) && isString(k.name) && isNumber(k.erstelltAm) && isNumber(k.geaendertAm);
+function alsZeit(v: unknown): number {
+  return isNumber(v) ? v : Date.now();
+}
+function optString(v: unknown): string | undefined {
+  return isString(v) ? v : undefined;
 }
 
-function validiereKind(r: unknown): r is Kind {
-  if (!r || typeof r !== 'object') return false;
+function normKlasse(r: unknown): Klasse | null {
+  if (!r || typeof r !== 'object') return null;
   const k = r as Record<string, unknown>;
-  return (
-    isString(k.id) &&
-    isString(k.name) &&
-    LERNSTAND_WERTE.has(k.lernstand as string) &&
-    isNumber(k.erstelltAm) &&
-    isNumber(k.geaendertAm)
-  );
+  if (!isString(k.id) || !isString(k.name)) return null;
+  return {
+    id: k.id,
+    name: k.name,
+    farbe: optString(k.farbe),
+    notiz: optString(k.notiz),
+    erstelltAm: alsZeit(k.erstelltAm),
+    geaendertAm: alsZeit(k.geaendertAm),
+  };
 }
 
-function validiereLernwort(r: unknown): r is Lernwort {
-  if (!r || typeof r !== 'object') return false;
+function normKind(r: unknown): Kind | null {
+  if (!r || typeof r !== 'object') return null;
   const k = r as Record<string, unknown>;
-  return (
-    isString(k.id) &&
-    isString(k.kindId) &&
-    isString(k.wort) &&
-    WORT_STATUS_WERTE.has(k.status as string) &&
-    Array.isArray(k.silben) &&
-    Array.isArray(k.merkstellen) &&
-    isNumber(k.erstelltAm) &&
-    isNumber(k.geaendertAm)
-  );
+  if (!isString(k.id) || !isString(k.name)) return null;
+  return {
+    id: k.id,
+    name: k.name,
+    klasseId: optString(k.klasseId),
+    lernstand: LERNSTAND_WERTE.has(k.lernstand as Lernstand) ? (k.lernstand as Lernstand) : 'klasse2',
+    notiz: optString(k.notiz),
+    erstelltAm: alsZeit(k.erstelltAm),
+    geaendertAm: alsZeit(k.geaendertAm),
+  };
 }
 
-function validiereUebungstext(r: unknown): r is Uebungstext {
-  if (!r || typeof r !== 'object') return false;
+function normLernwort(r: unknown): Lernwort | null {
+  if (!r || typeof r !== 'object') return null;
   const k = r as Record<string, unknown>;
-  return (
-    isString(k.id) &&
-    isString(k.kindId) &&
-    isString(k.titel) &&
-    TEXTART_WERTE.has(k.textart as string) &&
-    isString(k.text) &&
-    isNumber(k.erstelltAm) &&
-    isNumber(k.geaendertAm)
-  );
+  if (!isString(k.id) || !isString(k.kindId) || !isString(k.wort)) return null;
+  return {
+    id: k.id,
+    kindId: k.kindId,
+    wort: k.wort,
+    artikel: ARTIKEL_WERTE.has(k.artikel as string) ? (k.artikel as Lernwort['artikel']) : '',
+    wortart: optString(k.wortart),
+    silben: Array.isArray(k.silben) ? k.silben.filter(isString) : [],
+    merkstellen: Array.isArray(k.merkstellen) ? k.merkstellen.filter(isNumber) : [],
+    status: WORT_STATUS_WERTE.has(k.status as WortStatus) ? (k.status as WortStatus) : 'neu',
+    fach: isNumber(k.fach) ? k.fach : undefined,
+    faelligAm: isNumber(k.faelligAm) ? k.faelligAm : undefined,
+    quelle: optString(k.quelle),
+    notiz: optString(k.notiz),
+    erstelltAm: alsZeit(k.erstelltAm),
+    geaendertAm: alsZeit(k.geaendertAm),
+  };
 }
 
-/** Entfernt API-Schlüssel aus einer Einstellungen-Kopie. */
-function ohneSecrets(e: Einstellungen): Einstellungen {
-  return { ...e, geminiApiKey: '', claudeApiKey: '' };
+function normUebungstext(r: unknown): Uebungstext | null {
+  if (!r || typeof r !== 'object') return null;
+  const k = r as Record<string, unknown>;
+  if (!isString(k.id) || !isString(k.kindId) || !isString(k.titel)) return null;
+  return {
+    id: k.id,
+    kindId: k.kindId,
+    titel: k.titel,
+    textart: TEXTART_WERTE.has(k.textart as TextArt) ? (k.textart as TextArt) : 'geschichte',
+    text: isString(k.text) ? k.text : '',
+    loesungswoerter: Array.isArray(k.loesungswoerter) ? k.loesungswoerter.filter(isString) : undefined,
+    verwendeteWoerter: Array.isArray(k.verwendeteWoerter) ? k.verwendeteWoerter.filter(isString) : [],
+    erstelltAm: alsZeit(k.erstelltAm),
+    geaendertAm: alsZeit(k.geaendertAm),
+  };
+}
+
+/** Normalisiert eine Liste und zählt die verworfenen (unbrauchbaren) Records. */
+function normListe<T>(arr: unknown, norm: (r: unknown) => T | null): { ok: T[]; verworfen: number } {
+  const eingang = Array.isArray(arr) ? arr : [];
+  const ok: T[] = [];
+  for (const r of eingang) {
+    const n = norm(r);
+    if (n) ok.push(n);
+  }
+  return { ok, verworfen: eingang.length - ok.length };
 }
 
 /** Validiert und parst einen Backup-String. Wirft bei ungültigem Inhalt. */
-export function parseBackup(json: string): Backup {
+export function parseBackup(json: string): ParseErgebnis {
   let obj: unknown;
   try {
     obj = JSON.parse(json);
@@ -123,43 +178,51 @@ export function parseBackup(json: string): Backup {
   }
   const d = b.daten;
 
-  const klassen = (Array.isArray(d.klassen) ? d.klassen : []).filter(validiereKlasse);
-  const kinder = (Array.isArray(d.kinder) ? d.kinder : []).filter(validiereKind);
-  const lernwoerter = (Array.isArray(d.lernwoerter) ? d.lernwoerter : []).filter(validiereLernwort);
-  const uebungstexte = (Array.isArray(d.uebungstexte) ? d.uebungstexte : []).filter(validiereUebungstext);
+  const kl = normListe(d.klassen, normKlasse);
+  const ki = normListe(d.kinder, normKind);
+  const lw = normListe(d.lernwoerter, normLernwort);
+  const ut = normListe(d.uebungstexte, normUebungstext);
 
-  // Referentielle Integrität: nur Records mit gültigem Eltern-Bezug behalten.
-  const klassenIds = new Set(klassen.map((k) => k.id));
-  const kinderIds = new Set(kinder.map((k) => k.id));
-  const kinderClean = kinder.map((k) =>
+  // Referentielle Integrität: Kind ohne vorhandene Klasse behält das Kind,
+  // verliert aber die (verwaiste) Klassenzuordnung – kein Datenverlust.
+  const klassenIds = new Set(kl.ok.map((k) => k.id));
+  const kinderIds = new Set(ki.ok.map((k) => k.id));
+  const kinder = ki.ok.map((k) =>
     k.klasseId && !klassenIds.has(k.klasseId) ? { ...k, klasseId: undefined } : k,
   );
-  const lernwoerterClean = lernwoerter.filter((l) => kinderIds.has(l.kindId));
-  const uebungstexteClean = uebungstexte.filter((u) => kinderIds.has(u.kindId));
+  // Lernwörter/Texte ohne zugehöriges Kind sind nicht zuordenbar → verwerfen.
+  const lernwoerter = lw.ok.filter((l) => kinderIds.has(l.kindId));
+  const uebungstexte = ut.ok.filter((u) => kinderIds.has(u.kindId));
+
+  const bericht: ImportBericht = {
+    verworfen: {
+      klassen: kl.verworfen,
+      kinder: ki.verworfen,
+      lernwoerter: lw.verworfen + (lw.ok.length - lernwoerter.length),
+      uebungstexte: ut.verworfen + (ut.ok.length - uebungstexte.length),
+    },
+  };
 
   return {
-    schreibzeit: true,
-    version: b.version,
-    exportiertAm: b.exportiertAm ?? Date.now(),
-    daten: {
-      klassen,
-      kinder: kinderClean,
-      lernwoerter: lernwoerterClean,
-      uebungstexte: uebungstexteClean,
-      einstellungen: d.einstellungen,
+    backup: {
+      schreibzeit: true,
+      version: b.version,
+      exportiertAm: b.exportiertAm ?? Date.now(),
+      daten: { klassen: kl.ok, kinder, lernwoerter, uebungstexte, einstellungen: d.einstellungen },
     },
+    bericht,
   };
 }
 
-/**
- * Führt zwei Listen anhand der `id` zusammen. Einträge aus `incoming`
- * überschreiben gleiche IDs aus `existing`. Rein und testbar.
- */
-export function mergeById<T extends { id: string }>(existing: T[], incoming: T[]): T[] {
-  const map = new Map<string, T>();
-  for (const e of existing) map.set(e.id, e);
-  for (const i of incoming) map.set(i.id, i);
-  return [...map.values()];
+/** Gesamtzahl verworfener Datensätze eines Berichts. */
+export function verworfenGesamt(bericht: ImportBericht): number {
+  const v = bericht.verworfen;
+  return v.klassen + v.kinder + v.lernwoerter + v.uebungstexte;
+}
+
+/** Entfernt API-Schlüssel aus einer Einstellungen-Kopie. */
+function ohneSecrets(e: Einstellungen): Einstellungen {
+  return { ...e, geminiApiKey: '', claudeApiKey: '' };
 }
 
 /** Sammelt alle Daten aus der Datenbank für ein vollständiges Backup. */
@@ -192,12 +255,38 @@ export async function exportKind(kindId: string): Promise<Backup> {
   return buildBackup({ klassen, kinder, lernwoerter, uebungstexte });
 }
 
+/**
+ * Vergibt für IDs, die in `vorhanden` bereits existieren, neue IDs und liefert
+ * eine Abbildung alt→neu. So führt „Zusammenführen" rein additiv zusammen,
+ * ohne vorhandene Datensätze zu überschreiben.
+ */
+function remapKollisionen<T extends { id: string }>(
+  records: T[],
+  vorhanden: Set<string>,
+): { records: T[]; map: Map<string, string> } {
+  const map = new Map<string, string>();
+  const out = records.map((r) => {
+    if (!vorhanden.has(r.id)) return r;
+    const neu = newId();
+    map.set(r.id, neu);
+    return { ...r, id: neu };
+  });
+  return { records: out, map };
+}
+
+function ersetzeId<T>(map: Map<string, string>, id: T): T {
+  return (typeof id === 'string' && map.has(id) ? (map.get(id) as T) : id);
+}
+
 /** Spielt ein Backup in die Datenbank ein. */
 export async function importBackup(backup: Backup, modus: ImportModus): Promise<void> {
   await db.transaction(
     'rw',
     [db.klassen, db.kinder, db.lernwoerter, db.uebungstexte, db.einstellungen],
     async () => {
+      const d = backup.daten;
+      let { klassen, kinder, lernwoerter, uebungstexte } = d;
+
       if (modus === 'ersetzen') {
         await Promise.all([
           db.klassen.clear(),
@@ -205,12 +294,36 @@ export async function importBackup(backup: Backup, modus: ImportModus): Promise<
           db.lernwoerter.clear(),
           db.uebungstexte.clear(),
         ]);
+      } else {
+        // Zusammenführen: kollidierende IDs neu vergeben statt überschreiben –
+        // damit vorhandene Daten erhalten bleiben (nichts geht verloren).
+        const [klIds, kiIds, lwIds, utIds] = await Promise.all([
+          db.klassen.toCollection().primaryKeys(),
+          db.kinder.toCollection().primaryKeys(),
+          db.lernwoerter.toCollection().primaryKeys(),
+          db.uebungstexte.toCollection().primaryKeys(),
+        ]);
+        const kl = remapKollisionen(klassen, new Set(klIds as string[]));
+        klassen = kl.records;
+        // Klassenzuordnung der Kinder auf neue Klassen-IDs umbiegen.
+        const kinderMitKlasse = kinder.map((k) => ({
+          ...k,
+          klasseId: k.klasseId ? ersetzeId(kl.map, k.klasseId) : k.klasseId,
+        }));
+        const ki = remapKollisionen(kinderMitKlasse, new Set(kiIds as string[]));
+        kinder = ki.records;
+        // Kind-Bezug der Lernwörter/Texte auf neue Kind-IDs umbiegen.
+        const lwMitKind = lernwoerter.map((l) => ({ ...l, kindId: ersetzeId(ki.map, l.kindId) }));
+        lernwoerter = remapKollisionen(lwMitKind, new Set(lwIds as string[])).records;
+        const utMitKind = uebungstexte.map((u) => ({ ...u, kindId: ersetzeId(ki.map, u.kindId) }));
+        uebungstexte = remapKollisionen(utMitKind, new Set(utIds as string[])).records;
       }
-      const d = backup.daten;
-      await db.klassen.bulkPut(d.klassen);
-      await db.kinder.bulkPut(d.kinder);
-      await db.lernwoerter.bulkPut(d.lernwoerter);
-      await db.uebungstexte.bulkPut(d.uebungstexte);
+
+      await db.klassen.bulkPut(klassen);
+      await db.kinder.bulkPut(kinder);
+      await db.lernwoerter.bulkPut(lernwoerter);
+      await db.uebungstexte.bulkPut(uebungstexte);
+
       // Einstellungen aus Backup importieren, aber nie API-Keys übernehmen.
       if (d.einstellungen) {
         const current = await db.einstellungen.get('app');

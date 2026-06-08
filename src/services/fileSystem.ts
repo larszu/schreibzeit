@@ -5,7 +5,14 @@
 // und „Speichern unter" legt eine neue an. In anderen Browsern gibt es einen
 // Fallback über Datei-Download bzw. Datei-Auswahl.
 
-import { exportAll, parseBackup, importBackup, backupDateiname, downloadBackup } from './backup';
+import {
+  exportAll,
+  parseBackup,
+  importBackup,
+  backupDateiname,
+  downloadBackup,
+  verworfenGesamt,
+} from './backup';
 
 interface FileSystemFileHandleLike {
   createWritable: () => Promise<{
@@ -69,6 +76,8 @@ export interface OeffnenErgebnis {
   name: string;
   kinder: number;
   woerter: number;
+  /** Anzahl beim Einlesen verworfener Datensätze (0 = alles übernommen). */
+  verworfen: number;
 }
 
 /** „Öffnen …" – Backup-Datei wählen, einlesen und importieren. */
@@ -94,12 +103,13 @@ export async function oeffnen(modus: 'ersetzen' | 'zusammenfuehren'): Promise<Oe
     name = datei.name;
   }
 
-  const backup = parseBackup(text);
+  const { backup, bericht } = parseBackup(text);
   await importBackup(backup, modus);
   return {
     name,
     kinder: backup.daten.kinder.length,
     woerter: backup.daten.lernwoerter.length,
+    verworfen: verworfenGesamt(bericht),
   };
 }
 
