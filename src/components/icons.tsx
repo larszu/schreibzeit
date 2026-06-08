@@ -120,12 +120,6 @@ export const IconChevronsRight = (p: P) => (
     <path d="M13 6l6 6-6 6M6 6l6 6-6 6" />
   </svg>
 );
-export const IconSpeaker = (p: P) => (
-  <svg {...base(p)}>
-    <path d="M11 5 6 9H2v6h4l5 4V5z" />
-    <path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14" />
-  </svg>
-);
 export const IconList = (p: P) => (
   <svg {...base(p)}>
     <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
