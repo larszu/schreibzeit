@@ -128,11 +128,19 @@ Die App lässt sich mit einem Klick als Webseite veröffentlichen:
 - Pro Wort: Artikel, Wortart, **Silbentrennung**, **Merkstellen**, Status, Quelle, Notiz
 - Status `neu` · `wird geübt` · `sitzt` mit Filter &amp; Sortierung
 - Hinzufügen, bearbeiten, löschen, duplizieren, Massenaktionen
-- **Wort vorlesen** &amp; **Diktat-Modus** (liest die Wörter mit Pause vor – Selbst-Diktat, offline)
-- **Üben-Modus mit Spaced-Repetition** (Leitner-5-Fächer): fällige Wörter werden abgefragt, richtig Beantwortetes kommt erst nach 1/3/7/16 Tagen wieder, Wackliges sofort – mit Fälligkeits-Badge
+- **Teilbarer Übungslink pro Kind**: erzeugt einen Link, der den kindgerechten **Schüler-Übungsmodus** öffnet – die Lernwörter stecken im Link selbst (offline, ohne Server/Konto, nichts wird hochgeladen)
 - **Elternblatt** drucken: A4-quer-Wochenblatt mit kurzer FRESCH-Anleitung, Vorlage je Wort + Schreibzeilen + Unterschrift – fertig zum Mitgeben nach Hause
 - **Lernstands-Übersicht drucken** (für Elterngespräche/Doku)
 - Durchsuchbare Sidebar, schnelles Umschalten zwischen Kindern
+
+---
+
+### 🧒 Schüler-Übungsmodus (per teilbarem Link)
+- In der Kartei pro Kind einen **Übungslink** erzeugen und teilen (kopieren oder Vorschau öffnen)
+- Der Link öffnet eine eigene, **kindgerechte Oberfläche** – getrennt von der Lehrer-App
+- Übungsmethode **„Anschauen – Abdecken – Schreiben – Vergleichen"**: Wort mit Silbenbögen &amp; Merkstellen ansehen, abdecken, auf Papier schreiben, aufdecken und selbst kontrollieren
+- **Spaced-Repetition** (Leitner-5-Fächer, Intervalle 1/3/7/16 Tage): richtig Geschriebenes kommt später wieder, Wackliges sofort – der Lernfortschritt wird **lokal auf dem Schülergerät** gespeichert
+- Voll offline &amp; ohne Server: die Wörter sind im Link codiert, es wird nichts hochgeladen
 
 ---
 

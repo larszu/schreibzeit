@@ -7,6 +7,7 @@ import {
   IconCopy,
   IconCheck,
   IconSparkles,
+  IconLink,
 } from '@/components/icons';
 import { repository } from '@/db/repository';
 import { useLernwoerter, useWortlisten } from '@/state/hooks';
@@ -17,14 +18,13 @@ import { formatSyllables } from '@/core/syllables';
 import { lookupWort, woerterbuchSilben } from '@/services/dictionary';
 import { uebernehmeWort, uebernehmeWoerter } from '@/services/lernwortHelfer';
 import { erkenneTextAusFoto } from '@/services/ocr';
-import { faelligeWoerter, fachVon, naechsterStand } from '@/core/srs';
 import { GRUNDWORTSCHATZ_LISTEN, ladeGrundwortschatz } from '@/data/grundwortschatz';
 import { IconCamera, IconList, IconBook } from '@/components/icons';
 import { WortChips } from '@/components/WortChips';
 import { PrintPortal } from '@/components/print/PrintPortal';
 import { LernstandDocument } from '@/components/print/LernstandDocument';
 import { ElternblattDocument } from '@/components/print/ElternblattDocument';
-import { WortAnzeige } from '@/components/print/WortAnzeige';
+import { UebungslinkModal } from '@/components/UebungslinkModal';
 import { displayName } from '@/state/store';
 import { t } from '@/i18n/de';
 import { drucke } from '@/services/print';
@@ -50,7 +50,7 @@ export function KarteiView({
     offen: false,
     tab: 'einzeln',
   });
-  const [uebenOffen, setUebenOffen] = useState(false);
+  const [linkOffen, setLinkOffen] = useState(false);
   const [auswahl, setAuswahl] = useState<Set<string>>(new Set());
   const [uebersichtDruck, setUebersichtDruck] = useState(false);
   const [elternDruck, setElternDruck] = useState(false);
@@ -59,7 +59,6 @@ export function KarteiView({
     () => (filter === 'alle' ? woerter : woerter.filter((w) => w.status === filter)),
     [woerter, filter],
   );
-  const faelligAnzahl = useMemo(() => faelligeWoerter(woerter).length, [woerter]);
 
   function toggleAuswahl(id: string) {
     setAuswahl((alt) => {
@@ -92,15 +91,10 @@ export function KarteiView({
         {woerter.length > 0 && (
           <button
             className="btn-secondary"
-            onClick={() => setUebenOffen(true)}
-            title="Fällige Wörter wiederholen (Spaced Repetition)"
+            onClick={() => setLinkOffen(true)}
+            title="Teilbaren Übungslink für dieses Kind erzeugen"
           >
-            <IconCheck width={18} height={18} /> Üben
-            {faelligAnzahl > 0 && (
-              <span className="ml-1 rounded-full bg-brand-500 px-1.5 text-xs font-semibold text-white">
-                {faelligAnzahl}
-              </span>
-            )}
+            <IconLink width={18} height={18} /> Übungslink
           </button>
         )}
         {woerter.length > 0 && (
@@ -198,7 +192,13 @@ export function KarteiView({
         vorhandene={woerter}
         onClose={() => setAddModal((a) => ({ ...a, offen: false }))}
       />
-      <UebenModal offen={uebenOffen} woerter={woerter} onClose={() => setUebenOffen(false)} />
+      <UebungslinkModal
+        offen={linkOffen}
+        kind={kind}
+        woerter={woerter}
+        einstellungen={einstellungen}
+        onClose={() => setLinkOffen(false)}
+      />
 
       {uebersichtDruck && (
         <PrintPortal solo>
@@ -969,125 +969,6 @@ function WortHinzufuegenModal({
       )}
       {tab === 'gws' && (
         <GrundwortschatzBody kind={kind} einstellungen={einstellungen} vorhandene={vorhandene} />
-      )}
-    </Modal>
-  );
-}
-
-function UebenModal({
-  offen,
-  woerter,
-  onClose,
-}: {
-  offen: boolean;
-  woerter: Lernwort[];
-  onClose: () => void;
-}) {
-  const [liste, setListe] = useState<Lernwort[]>([]);
-  const [index, setIndex] = useState(0);
-  const [aufgedeckt, setAufgedeckt] = useState(false);
-  const [richtig, setRichtig] = useState(0);
-  const [falsch, setFalsch] = useState(0);
-
-  useEffect(() => {
-    if (offen) {
-      setListe(faelligeWoerter(woerter));
-      setIndex(0);
-      setAufgedeckt(false);
-      setRichtig(0);
-      setFalsch(0);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [offen]);
-
-  const aktuell = liste[index];
-  const fertig = liste.length > 0 && index >= liste.length;
-
-  async function bewerten(korrekt: boolean) {
-    if (!aktuell) return;
-    await repository.updateLernwort(aktuell.id, naechsterStand(aktuell, korrekt));
-    if (korrekt) setRichtig((r) => r + 1);
-    else setFalsch((f) => f + 1);
-    setAufgedeckt(false);
-    setIndex((i) => i + 1);
-  }
-
-  return (
-    <Modal offen={offen} titel="Üben (Wiederholung)" onClose={onClose}>
-      {liste.length === 0 ? (
-        <div className="space-y-3 text-center">
-          <p className="font-serif text-lg text-ink">Aktuell ist nichts fällig 🎉</p>
-          <p className="text-sm text-ink-soft">Alle Wörter sind bis zur nächsten Wiedervorlage geübt.</p>
-          <div className="flex justify-center gap-2">
-            <button
-              className="btn-secondary"
-              onClick={() => {
-                setListe(woerter);
-                setIndex(0);
-              }}
-            >
-              Trotzdem alle üben
-            </button>
-            <button className="btn-primary" onClick={onClose}>
-              {t.common.schliessen}
-            </button>
-          </div>
-        </div>
-      ) : fertig ? (
-        <div className="space-y-3 text-center">
-          <p className="font-serif text-lg text-ink">Fertig!</p>
-          <p className="text-sm text-ink-soft">
-            ✅ {richtig} richtig · ✏️ {falsch} zu üben
-          </p>
-          <button className="btn-primary" onClick={onClose}>
-            {t.common.schliessen}
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs text-ink-faint">
-            <span>
-              Wort {index + 1} / {liste.length}
-            </span>
-            <span>Fach {fachVon(aktuell)}/5</span>
-          </div>
-
-          <div className="rounded-lg border border-paper-200 bg-paper-50 px-3 py-6 text-center">
-            {aufgedeckt ? (
-              <div className="flex justify-center">
-                <WortAnzeige
-                  wort={aktuell.wort}
-                  silben={aktuell.silben}
-                  merkstellen={aktuell.merkstellen}
-                  mitMerkstellen
-                  artikel={aktuell.artikel || undefined}
-                  groesse={30}
-                />
-              </div>
-            ) : (
-              <p className="text-sm text-ink-soft">
-                Wort ansagen, aufschreiben lassen – dann aufdecken und vergleichen.
-              </p>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {!aufgedeckt ? (
-              <button className="btn-primary" onClick={() => setAufgedeckt(true)}>
-                Aufdecken
-              </button>
-            ) : (
-              <>
-                <button className="btn-danger" onClick={() => bewerten(false)}>
-                  Nochmal üben
-                </button>
-                <button className="btn-primary" onClick={() => bewerten(true)}>
-                  <IconCheck width={18} height={18} /> Richtig
-                </button>
-              </>
-            )}
-          </div>
-        </div>
       )}
     </Modal>
   );

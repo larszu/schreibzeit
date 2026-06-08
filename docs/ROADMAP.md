@@ -45,11 +45,11 @@ Legende: ✅ bereits in Schreibzeit · 🟡 teilweise · ⬜ geplant/Idee
 **Fortschritt verfolgen (CRM-Kern)**
 12. ✅ *Digitale Lernwörter-Kartei pro Kind* mit Status `neu/wird geübt/sitzt`.
 13. ⬜ *Fehlerwort-Erfassung → Auto-Kartei*: einmal eintragen, fließt in den Übungsstapel.
-14. ✅ *Spaced-Repetition / „5-Fächer"-Logik*: Leitner-Verfahren (5 Fächer, Intervalle 1/3/7/16 Tage). **Üben**-Modus mit Wiedervorlage – richtig beantwortete Wörter steigen ein Fach auf und kommen später wieder, falsche fallen zurück in Fach 1. Fälligkeits-Badge in der Werkzeugleiste.
+14. ✅ *Spaced-Repetition / „5-Fächer"-Logik*: Leitner-Verfahren (5 Fächer, Intervalle 1/3/7/16 Tage). Genutzt im **Schüler-Übungsmodus** (per teilbarem Link, siehe #16) – richtig Geschriebenes steigt ein Fach auf und kommt später wieder, Falsches fällt zurück in Fach 1. Fortschritt lokal auf dem Schülergerät.
 15. ⬜ *Fortschritt über Zeit* je Kind und je Rechtschreib-Phänomen (Auswertung).
 
 **Elternkommunikation**
-16. ✅ *Audio-Diktat & Eltern-Übungspaket*: **Wort vorlesen** + **Diktat-Modus** (liest die Wörter mit einstellbarer Pause vor, optional 2×) – Selbst-Diktat-Training; **Elternblatt** (A4-quer-Wochenblatt mit kurzer FRESCH-Anleitung, Vorlage je Wort + Schreibzeilen + Unterschriftszeile) zum Ausdrucken/Mitgeben.
+16. ✅ *Schüler-Übungslink & Eltern-Übungspaket*: pro Kind ein **teilbarer Übungslink**, der einen kindgerechten Schüler-Client öffnet (Methode „Anschauen – Abdecken – Schreiben – Vergleichen", Spaced-Repetition, Fortschritt lokal beim Kind; Wörter im Link codiert, offline, ohne Server); **Elternblatt** (A4-quer-Wochenblatt mit kurzer FRESCH-Anleitung, Vorlage je Wort + Schreibzeilen + Unterschriftszeile) zum Ausdrucken/Mitgeben.
 17. ⬜ *Kurzer Eltern-Status* („8/10 geübt") – ohne Eltern-Cloud-Konto.
 
 **Berichte**
@@ -57,7 +57,7 @@ Legende: ✅ bereits in Schreibzeit · 🟡 teilweise · ⬜ geplant/Idee
 
 **Ablauf & Organisation**
 19. 🟡 *Eine Stelle für alles* (Klassen, Kinder, Wörter, Texte) – Grundgerüst da; ⬜ Beobachtungs-/Notizfunktion.
-20. 🟡 *Diktatformen*: **Audio-Selbstdiktat** vorhanden; ⬜ weitere Stationen (Laufdiktat, Partnerdiktat, ABC-Ordnen) als Druckgeneratoren noch offen.
+20. 🟡 *Diktatformen*: **Schüler-Übungslink** (Abschreib-/Selbstkontroll-Methode) vorhanden; ⬜ weitere Stationen (Laufdiktat, Partnerdiktat, ABC-Ordnen) als Druckgeneratoren noch offen.
 
 **Querschnitt: Vertrauen/Datenschutz**
 21. ✅ *Local-first, offline, keine Schülerdaten in der Cloud* – Headline-Versprechen (siehe `DSGVO.md`).

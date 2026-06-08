@@ -4,25 +4,31 @@
 // höher (längeres Intervall bis zur Wiedervorlage); falsch → zurück in Fach 1.
 // Rein und testbar – keine Abhängigkeit zu DB/UI.
 
-import type { Lernwort, WortStatus } from '@/types';
+import type { WortStatus } from '@/types';
 
 const TAG_MS = 86_400_000;
 
 /** Tage bis zur Wiedervorlage je Fach (Index 0 = Fach 1). */
 export const SRS_INTERVALLE_TAGE = [0, 1, 3, 7, 16];
 
-export function fachVon(w: Lernwort): number {
+// Strukturelle Mindesttypen – so lässt sich die SRS-Logik sowohl auf
+// vollständige `Lernwort`-Objekte (Lehrer-Kartei) als auch auf die
+// schlankeren Übungs-Items des Schüler-Clients anwenden.
+type MitFach = { fach?: number };
+type MitFaelligkeit = { faelligAm?: number };
+
+export function fachVon(w: MitFach): number {
   const f = w.fach ?? 1;
   return Math.min(5, Math.max(1, f));
 }
 
 /** Ist das Wort heute (oder überfällig) zur Wiederholung dran? */
-export function istFaellig(w: Lernwort, now = Date.now()): boolean {
+export function istFaellig(w: MitFaelligkeit, now = Date.now()): boolean {
   return (w.faelligAm ?? 0) <= now;
 }
 
 /** Alle aktuell fälligen Wörter (älteste Fälligkeit zuerst). */
-export function faelligeWoerter(woerter: Lernwort[], now = Date.now()): Lernwort[] {
+export function faelligeWoerter<T extends MitFaelligkeit>(woerter: T[], now = Date.now()): T[] {
   return woerter
     .filter((w) => istFaellig(w, now))
     .sort((a, b) => (a.faelligAm ?? 0) - (b.faelligAm ?? 0));
@@ -35,7 +41,7 @@ export interface SrsStand {
 }
 
 /** Neuer Lernstand nach einer Bewertung (richtig/falsch). */
-export function naechsterStand(w: Lernwort, korrekt: boolean, now = Date.now()): SrsStand {
+export function naechsterStand(w: MitFach, korrekt: boolean, now = Date.now()): SrsStand {
   const aktuell = fachVon(w);
   const fach = korrekt ? Math.min(5, aktuell + 1) : 1;
   const tage = SRS_INTERVALLE_TAGE[fach - 1] ?? 0;
