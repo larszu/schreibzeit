@@ -475,8 +475,9 @@ export function KnickblattView({
         </Accordion>
       </div>
 
-      {/* Vorschau */}
-      <div>
+      {/* Vorschau – min-w-0, damit die 1fr-Spalte schrumpfen kann und die
+          A4-Vorschau per useFitScale skaliert statt überzulaufen. */}
+      <div className="min-w-0">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <label className="text-sm text-ink-soft" htmlFor="kb-druckziel">

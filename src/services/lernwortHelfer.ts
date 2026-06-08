@@ -2,13 +2,16 @@
 // Artikel, Merkstellen) als Lernwort übernehmen. Wird von mehreren Stellen
 // genutzt (Text-Extraktion, Grundwortschatz), um Doppelung zu vermeiden.
 import { repository } from '@/db/repository';
-import { lookupWort } from './dictionary';
+import { lookupWort, ladeWoerterbuch } from './dictionary';
 
 export async function uebernehmeWort(
   kindId: string,
   wort: string,
   quelle: string,
 ): Promise<void> {
+  // Sicherstellen, dass das große Wörterbuch geladen ist – sonst fehlen beim
+  // (frühen) Import die Artikel, weil lookupWort nur die kleine Liste sähe.
+  await ladeWoerterbuch();
   const info = lookupWort(wort);
   await repository.addLernwort(kindId, wort, {
     quelle,
@@ -24,5 +27,6 @@ export async function uebernehmeWoerter(
   woerter: string[],
   quelle: string,
 ): Promise<void> {
+  await ladeWoerterbuch();
   for (const w of woerter) await uebernehmeWort(kindId, w, quelle);
 }

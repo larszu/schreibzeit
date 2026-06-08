@@ -128,7 +128,8 @@ export function WortkartenView({
         </div>
       </div>
 
-      <div>
+      {/* min-w-0: 1fr-Spalte schrumpfbar halten, damit die A4-Vorschau passt. */}
+      <div className="min-w-0">
         <div className="mb-3 flex items-center justify-between">
           <p className="text-sm text-ink-soft">Vorschau · A4 quer · zum Ausschneiden</p>
           <button
