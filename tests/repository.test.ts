@@ -92,4 +92,19 @@ describe('Backup – Export/Import über die Datenbank', () => {
     // Die neu importierte Kopie hat ein anderes Kind referenziert als die alte.
     expect(new Set(woerter.map((w) => w.kindId)).size).toBe(2);
   });
+
+  it('exportiert keine API-Schlüssel', async () => {
+    await repository.saveEinstellungen({ geminiApiKey: 'GEHEIM-G', claudeApiKey: 'GEHEIM-C' });
+    const backup = await exportAll();
+    expect(backup.daten.einstellungen?.geminiApiKey).toBe('');
+    expect(backup.daten.einstellungen?.claudeApiKey).toBe('');
+  });
+
+  it('überschreibt beim Import niemals vorhandene lokale API-Schlüssel', async () => {
+    await repository.saveEinstellungen({ geminiApiKey: 'MEIN-LOKALER-KEY' });
+    const fremd = await exportAll(); // enthält leere Keys
+    await importBackup(fremd, 'zusammenfuehren');
+    const e = await repository.getEinstellungen();
+    expect(e.geminiApiKey).toBe('MEIN-LOKALER-KEY');
+  });
 });

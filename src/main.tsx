@@ -6,6 +6,12 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { istUebenHash } from './core/uebenLink';
 import './index.css';
 
+// Unbehandelte Promise-Rejections sichtbar machen (die ErrorBoundary fängt nur
+// Fehler im Render). In der lokalen App genügt das Konsolen-Log für DevTools.
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('Unbehandelte Promise-Rejection:', e.reason);
+});
+
 // Ein einziger Build, zwei Einstiege: Mit einem geteilten Übungslink
 // (#ueben=…) startet der kindgerechte Schüler-Client, sonst die Lehrer-App.
 const istSchueler = istUebenHash(window.location.hash);
