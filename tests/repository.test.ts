@@ -72,4 +72,19 @@ describe('Backup – Export/Import über die Datenbank', () => {
     expect(await db.kinder.count()).toBe(2);
     expect(await db.lernwoerter.count()).toBe(2);
   });
+
+  it('exportiert keine API-Schlüssel', async () => {
+    await repository.saveEinstellungen({ geminiApiKey: 'GEHEIM-G', claudeApiKey: 'GEHEIM-C' });
+    const backup = await exportAll();
+    expect(backup.daten.einstellungen?.geminiApiKey).toBe('');
+    expect(backup.daten.einstellungen?.claudeApiKey).toBe('');
+  });
+
+  it('überschreibt beim Import niemals vorhandene lokale API-Schlüssel', async () => {
+    await repository.saveEinstellungen({ geminiApiKey: 'MEIN-LOKALER-KEY' });
+    const fremd = await exportAll(); // enthält leere Keys
+    await importBackup(fremd, 'zusammenfuehren');
+    const e = await repository.getEinstellungen();
+    expect(e.geminiApiKey).toBe('MEIN-LOKALER-KEY');
+  });
 });

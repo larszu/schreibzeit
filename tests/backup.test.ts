@@ -47,6 +47,55 @@ describe('buildBackup / parseBackup (Round-Trip)', () => {
   });
 });
 
+describe('parseBackup – Validierung & Integrität', () => {
+  it('filtert ungültige Records (fehlende Pflichtfelder, falsche Enums)', () => {
+    const json = JSON.stringify({
+      schreibzeit: true,
+      version: 1,
+      daten: {
+        kinder: [
+          { id: 'k1', name: 'Gut', lernstand: 'klasse2', erstelltAm: 1, geaendertAm: 1 },
+          { id: 'k2', name: 'Kein Lernstand', erstelltAm: 1, geaendertAm: 1 },
+          { id: 'k3', name: 'Falscher Lernstand', lernstand: 'hacker', erstelltAm: 1, geaendertAm: 1 },
+          { name: 'Keine ID', lernstand: 'klasse1', erstelltAm: 1, geaendertAm: 1 },
+        ],
+      },
+    });
+    const parsed = parseBackup(json);
+    expect(parsed.daten.kinder).toHaveLength(1);
+    expect(parsed.daten.kinder[0].id).toBe('k1');
+  });
+
+  it('entfernt verwaiste Lernwörter ohne gültiges Kind', () => {
+    const json = JSON.stringify({
+      schreibzeit: true,
+      version: 1,
+      daten: {
+        kinder: [{ id: 'k1', name: 'A', lernstand: 'klasse1', erstelltAm: 1, geaendertAm: 1 }],
+        lernwoerter: [
+          { id: 'w1', kindId: 'k1', wort: 'Haus', status: 'neu', silben: [], merkstellen: [], erstelltAm: 1, geaendertAm: 1 },
+          { id: 'w2', kindId: 'geloescht', wort: 'Waise', status: 'neu', silben: [], merkstellen: [], erstelltAm: 1, geaendertAm: 1 },
+        ],
+      },
+    });
+    const parsed = parseBackup(json);
+    expect(parsed.daten.lernwoerter).toHaveLength(1);
+    expect(parsed.daten.lernwoerter[0].id).toBe('w1');
+  });
+
+  it('setzt eine ungültige klasseId auf undefined zurück', () => {
+    const json = JSON.stringify({
+      schreibzeit: true,
+      version: 1,
+      daten: {
+        kinder: [{ id: 'k1', name: 'A', klasseId: 'gibtsnicht', lernstand: 'klasse1', erstelltAm: 1, geaendertAm: 1 }],
+      },
+    });
+    const parsed = parseBackup(json);
+    expect(parsed.daten.kinder[0].klasseId).toBeUndefined();
+  });
+});
+
 describe('mergeById', () => {
   it('führt anhand der id zusammen und überschreibt Duplikate', () => {
     const a = [

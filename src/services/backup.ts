@@ -101,6 +101,23 @@ function ohneSecrets(e: Einstellungen): Einstellungen {
   return { ...e, geminiApiKey: '', claudeApiKey: '' };
 }
 
+/**
+ * Migrationen für ältere Backup-Formate. Schlüssel = Quellversion; jede
+ * Funktion hebt die Daten um genau eine Version an. Aktuell gibt es nur
+ * Version 1, daher ist die Tabelle leer – der Mechanismus ist aber vorhanden,
+ * damit künftige Schema-Änderungen alte Backups verlustfrei einlesen können.
+ */
+const MIGRATIONEN: Record<number, (d: BackupDaten) => BackupDaten> = {};
+
+function migriere(daten: BackupDaten, vonVersion: number): BackupDaten {
+  let d = daten;
+  for (let v = vonVersion; v < BACKUP_VERSION; v++) {
+    const schritt = MIGRATIONEN[v];
+    if (schritt) d = schritt(d);
+  }
+  return d;
+}
+
 /** Validiert und parst einen Backup-String. Wirft bei ungültigem Inhalt. */
 export function parseBackup(json: string): Backup {
   let obj: unknown;
@@ -121,7 +138,8 @@ export function parseBackup(json: string): Backup {
       `Das Backup wurde mit einer neueren Version erstellt (Version ${b.version}). Bitte App aktualisieren.`,
     );
   }
-  const d = b.daten;
+  // Ältere Backups vor der Validierung auf das aktuelle Format anheben.
+  const d = migriere(b.daten, b.version);
 
   const klassen = (Array.isArray(d.klassen) ? d.klassen : []).filter(validiereKlasse);
   const kinder = (Array.isArray(d.kinder) ? d.kinder : []).filter(validiereKind);

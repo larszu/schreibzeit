@@ -47,9 +47,17 @@ const ERLAUBTE_MIMES = new Set([
   'application/vnd.ms-opentype', '',
 ]);
 
+/**
+ * Prüft, ob Dateiname und MIME-Typ einer erlaubten Schriftart entsprechen.
+ * Rein und testbar.
+ */
+export function istErlaubteFontDatei(name: string, mime: string): boolean {
+  return ERLAUBT.test(name) && ERLAUBTE_MIMES.has(mime);
+}
+
 /** Fügt eine Schriftdatei hinzu und registriert sie sofort. */
 export async function fontHinzufuegen(name: string, file: File): Promise<FontEintrag> {
-  if (!ERLAUBT.test(file.name) || !ERLAUBTE_MIMES.has(file.type)) {
+  if (!istErlaubteFontDatei(file.name, file.type)) {
     throw new Error('Bitte eine Schriftdatei wählen (.ttf, .otf, .woff, .woff2).');
   }
   if (file.size > 6 * 1024 * 1024) {
